@@ -1,0 +1,6 @@
+[/] LIST functionality
+[/] Controller checks if dstores are still connected.
+[/] REMOVE functionality
+[ ] Fix dstore reconnect
+[/] Only serve clients if R dstores are connected.
+[ ] Fix client connecting process.

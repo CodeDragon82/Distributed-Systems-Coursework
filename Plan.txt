@@ -1,0 +1,16 @@
+April
+-----
+Week 1	04th - 10th		Aim: Complete LIST and REMOVE functionality.
+Week 2	11th - 14th		Aim: Complete LOAD, RELOAD and STORE functionality.
+Week 3	18th - 24th		Aim: Complete REBALANCE functionality
+Week 4	25th - 01st
+
+May
+---
+Week 5	02nd - 08th
+Week 6	09th - 15th
+Week 7	16th - 19th
+
+Deadline
+--------
+19th of May 
