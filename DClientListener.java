@@ -14,17 +14,14 @@ import java.net.SocketTimeoutException;
  * Used by the dstore to listen to send and receive messages to and from the client.
  */
 public class DClientListener extends Thread {
-    private static ServerSocket connectSocket;
+    private static ServerSocket serverSocket;
 
-    private static Socket clientSocket;
-
-    private static BufferedReader in;
-    private static PrintWriter out;
+    private static Socket socket;
 
     public DClientListener(int _port) throws IOException {
         try {
             Message.process("opening server socket", 1);
-            connectSocket = new ServerSocket(_port);
+            serverSocket = new ServerSocket(_port);
             Message.success("server socket opened on port " + _port, 1);
         } catch (IOException e) {
             Message.error("failed to open server socket on port " + _port, 1);
@@ -36,76 +33,48 @@ public class DClientListener extends Thread {
     @Override
     public void run() {
         while (true) {
+            Message.info("waiting for connection ...", 0);
 
-            if (clientSocket == null) listenForClientConnection();
-            else if (clientSocket.isClosed()) {
-                clientSocket = null;
-                in = null;
-                out = null;
-            } else listenForClientMessage();
-        }
-    }
+            try {
+                socket = serverSocket.accept();
+                socket.setSoTimeout(DStore.getTimeout());
 
-    private void listenForClientConnection() {
-        Message.info("listening for client connections ...", 0);
+                Message.info("connection from: " + socket.getInetAddress(), 0);
 
-        try {
-            clientSocket = connectSocket.accept();
-
-            in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
-            out = new PrintWriter(clientSocket.getOutputStream(), true);
-
-            // Set reading timeout.
-            clientSocket.setSoTimeout(DStore.getTimeout());
-
-            Message.info("client connection from: " + clientSocket.getInetAddress(), 0);
-        } catch (IOException e) {
-            e.printStackTrace();
+                BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+                String packet = in.readLine();
+                in.close();
+                
+                processPacket(packet);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
     }
 
     private void respond(String _packet) throws IOException {
+        PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
         out.println(_packet);
+        out.close();
 
         Message.info("sent response: " + _packet, 1);
     }
 
     private void sentData(String _data) throws IOException {
-        clientSocket.getOutputStream().write(_data.getBytes());
+        socket.getOutputStream().write(_data.getBytes());
 
         Message.info("sent data: " + _data, 1);
     }
 
-    private void listenForClientMessage() {
-        try {
-            String packet = in.readLine();
-            System.out.println();
-            processPacket(packet);
-        } catch (SocketTimeoutException e) {
-            System.out.print("+");
-        } catch (IOException e) {
-            Message.info("client connection closed", 0);
-
-            try {
-                in.close();
-            } catch (IOException e1) {
-                e1.printStackTrace();
-            }
-            out.close();
-            clientSocket = null;
-        }
-    }
-
-
-    private void processPacket(String _packet) throws IOException {
-        Message.process("processing packet from client: " + _packet, 0);
+    private void processPacket(String _packet) {
+        Message.process("processing packet: " + _packet, 0);
 
         if (_packet == null) {
             Message.error("received null packet", 1);
 
             Message.failed("couldn't process packet", 0);
 
-            throw new IOException();
+            return;
         }
 
         String[] packetContent = _packet.split(" ");
@@ -142,16 +111,33 @@ public class DClientListener extends Thread {
         }
     }
 
+    //// STORE OPERATION ////
+
     /**
      * Processes STORE packet sent by client.
      */
     private void processStore(String[] _arguments) throws IOException, PacketException, TimeoutException {
         Message.info("STORE request", 1);
 
+        if (validateStore(_arguments)) {
+            String fileName = _arguments[0];
+            int fileSize = Integer.valueOf(_arguments[1]);
+
+            performStore(fileName, fileSize);
+        }
+
+    }
+
+    private boolean validateStore(String[] _arguments) throws PacketException {
         // Validate arguments.
         if (_arguments.length != 2) {
             throw new PacketException("STORE command must have 2 arguments");
         }
+
+        // Check if file exists.
+        String fileName = _arguments[0];
+        File file = new File(DStore.getFileFolder(), fileName);
+        if (file.exists()) throw new PacketException("file already exist");
 
         int fileSize;
         try {
@@ -162,18 +148,17 @@ public class DClientListener extends Thread {
 
         if (fileSize < 0) throw new PacketException("file size must be positive");
 
-        // Check if file exists.
-        String fileName = _arguments[0];
-        File file = new File(DStore.getFileFolder(), fileName);
-        if (file.exists()) throw new PacketException("file already exist");
+        return true;
+    }
 
+    private void performStore(String _fileName, int _fileSize) throws TimeoutException, IOException {
         respond("ACK");
 
         Message.info("reading file content ...", 1);
         // Receive file contents from client.
         String fileContent = "";
         try {
-            byte[] fileBytes = clientSocket.getInputStream().readNBytes(fileSize);
+            byte[] fileBytes = socket.getInputStream().readNBytes(_fileSize);
             fileContent = new String(fileBytes);
         } catch (SocketTimeoutException e) {
             throw new TimeoutException("timed out while reading file content");
@@ -182,13 +167,13 @@ public class DClientListener extends Thread {
         }
 
         // Write file content to new file.
-        FileWriter fileWriter = new FileWriter(file);
+        File file = new File(DStore.getFileFolder(), _fileName);
+        FileWriter fileWriter = new FileWriter(_fileName);
         fileWriter.write(fileContent);
         fileWriter.close();
 
-        DStore.getControllerListener().respondToController("STORE_ACK " + fileName);
+        DStore.getControllerListener().respondToController("STORE_ACK " + _fileName);
     }
-
 
     
     //// LOAD DATA OPERATION ////
@@ -273,7 +258,7 @@ public class DClientListener extends Thread {
         respond("ACK");
 
         // Receive file content from the other dstore.
-        byte[] fileBytes = clientSocket.getInputStream().readNBytes(_fileSize);
+        byte[] fileBytes = socket.getInputStream().readNBytes(_fileSize);
         String fileContent = new String(fileBytes);
 
         // Create a file and write the file content to it.

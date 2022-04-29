@@ -12,10 +12,9 @@ public class DStore {
     private static File fileFolder;
 
     public static void main(String[] args) {
-        if (setupDStore(args)) {
-            connectToController();
-            setupClientListener();
-        }
+        if (setupDStore(args))
+            if (connectToController())
+                setupClientListener();
     }
 
     /**
@@ -65,7 +64,7 @@ public class DStore {
         }
 
         // Check for port conflict.
-        if (port == cport) {
+        if (port == cport && port != 0) {
             Message.error("port conflict (listening port must be different from controller port)", 1);
 
             setupCorrectly = false;
@@ -104,8 +103,10 @@ public class DStore {
 
     /**
      * Setup a listener to send and receive messages to and from the controller.
+     * 
+     * Returns true if connection was successful.
      */
-    private static void connectToController() {
+    private static boolean connectToController() {
         Message.process("setting up controller listener", 0);
 
         try {
@@ -117,7 +118,11 @@ public class DStore {
             Message.success("controller listener setup", 0);
         } catch (IOException e) {
             Message.failed("failed to setup controller listener", 0);
+
+            return false;
         }
+
+        return true;
     }
 
     /**
