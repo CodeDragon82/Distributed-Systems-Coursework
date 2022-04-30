@@ -17,7 +17,8 @@ public class Controller {
     public static void main(String[] args) throws IOException, IndexException {
         if (setupServer(args)) {
             listenForConnections();
-            // RebalanceModule.scheduleRebalance();
+
+            RebalanceModule.scheduleRebalance();
 
             Index.addFile("test.txt", 11);
 
@@ -44,7 +45,7 @@ public class Controller {
     private static void displayConnections() {
         System.out.println("DStores\n-------");
 
-        dStoreListeners.stream().forEach(ds -> System.out.println("DStore\t" 
+        getDStoreListeners().stream().forEach(ds -> System.out.println("DStore\t" 
                                                                 + "connection on port: "
                                                                 + ds.getSocket().getPort()
                                                                 + "\tlistening to clients on port: "
@@ -154,9 +155,9 @@ public class Controller {
     }
 
     /**
-     * Returns true if R dstores have joined.
+     * Returns true if atleast R dstores have joined.
      */
-    public static boolean enoughDStores() { return dStoreListeners.size() == replicationFactor; }
+    public static boolean enoughDStores() { return dStoreListeners.size() >= replicationFactor; }
 
     public static void setClientListener(ClientListener _clientListener) { clientListeners.add(_clientListener); }
     public static void addDStoreListener(DStoreListener _dStoreListener) { dStoreListeners.add(_dStoreListener); }
@@ -197,4 +198,5 @@ public class Controller {
 
     public static int getReplicationFactor() { return replicationFactor; }
     public static int getTimeout() { return timeout; }
+    public static int getRebalancePeriod() { return rebalancePeriod; }
 }

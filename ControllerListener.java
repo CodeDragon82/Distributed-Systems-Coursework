@@ -71,11 +71,9 @@ public class ControllerListener extends Thread {
             try {
                 while (true) {
                     String packet = in.readLine();
-                    System.out.println();
                     processPacket(packet);
                 }
             } catch (SocketTimeoutException e) {
-                System.out.print(".");
             } catch (SocketException e) {
                 Message.info("controller conneciton closed", 0);
 
@@ -112,7 +110,7 @@ public class ControllerListener extends Thread {
         Message.info("sent response: " + _packet, 1);
     }
 
-    private void processPacket(String _packet) throws IOException {
+    private void processPacket(String _packet) {
         Message.process("processing packet from controller: " + _packet, 0);
 
         if (_packet == null) {
@@ -120,7 +118,7 @@ public class ControllerListener extends Thread {
 
             Message.failed("couldn't process packet", 0);
 
-            throw new IOException();
+            return;
         }
 
         String[] packetContent = _packet.split(" ");
@@ -204,7 +202,7 @@ public class ControllerListener extends Thread {
         int currentArgument = 0;
 
         // Extract files that need to be sent.
-        int numberOfFilesToSend = Integer.valueOf(currentArgument);
+        int numberOfFilesToSend = Integer.valueOf(_arguments[currentArgument]);
         currentArgument++;
         for (int currentFileToSend = 0; currentFileToSend < numberOfFilesToSend; currentFileToSend++) {
             String fileName = _arguments[currentArgument];
@@ -221,7 +219,7 @@ public class ControllerListener extends Thread {
         }
 
         // Extract files that need to be removed.
-        int numberOfFilesToRemove = Integer.valueOf(currentArgument);
+        int numberOfFilesToRemove = Integer.valueOf(_arguments[currentArgument]);
         currentArgument++;
         for (int currentFileToRemove = 0; currentFileToRemove < numberOfFilesToRemove; currentFileToRemove++) {
             String fileName = _arguments[currentArgument];
@@ -239,28 +237,26 @@ public class ControllerListener extends Thread {
      * Happens during rebalancing.
      */
     private void sendFile(String _fileName, int _dstorePort) throws UnknownHostException, IOException, PacketException {
-        Message.info("sending file " + _fileName + " to" + _dstorePort, 1);
+        Message.info("sending file to " + _dstorePort + ": " + _fileName, 1);
 
         Socket socket = new Socket(InetAddress.getLocalHost(), _dstorePort);
-        socket.setSoTimeout(DStore.getTimeout());
+        // socket.setSoTimeout(DStore.getTimeout());
 
         // Send REBALANCE_STORE packet to dstore.
         PrintWriter printWriter = new PrintWriter(socket.getOutputStream(), true);
         int fileSize = (int) Files.size(Paths.get(DStore.getFileFolder().getAbsolutePath(), _fileName));
         String outputPacket = "REBALANCE_STORE " + _fileName + " " + fileSize;
         printWriter.println(outputPacket);
-        printWriter.close();
 
-        Message.info("sent packet: " + outputPacket, 1);
+        Message.info("sent packet: " + outputPacket, 2);
 
         // Wait to receive ACK packet from dstore.
-        BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(controllerSocket.getInputStream()));
+        BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
         String inPacket = bufferedReader.readLine();
-        bufferedReader.close();
         if (!inPacket.equals("ACK")) 
             throw new PacketException("unexpected response from dstore");
 
-        Message.info("received acknowledgement", 1);
+        Message.info("received acknowledgement", 2);
 
         // Read contents of file.
         File file = new File(DStore.getFileFolder(), _fileName);
@@ -270,10 +266,12 @@ public class ControllerListener extends Thread {
         while ((line = fileReader.readLine()) != null) fileContent += "\n" + line;
         fileReader.close();
 
+        Message.info("read file contents", 2);
+
         // Send file content to other dstore.
         socket.getOutputStream().write(fileContent.getBytes());
 
-        Message.info("sent file contents", 1);
+        Message.info("sent file contents", 2);
     }
 
     /**
@@ -282,10 +280,12 @@ public class ControllerListener extends Thread {
      * Happens during rebalancing.
      */
     private void removeFile(String _fileName) {
-        Message.info("removing file " + _fileName, 1);
+        Message.info("removing file: " + _fileName, 1);
 
         File file = new File(DStore.getFileFolder(), _fileName);
         file.delete();
+        
+        Message.info("removed file", 2);
     }
 
     //// ////

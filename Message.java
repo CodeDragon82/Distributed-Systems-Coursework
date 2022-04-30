@@ -33,14 +33,18 @@ public class Message {
     }
 
     private static void message(String _message, int _indent) {
-        System.out.print(LocalDateTime.now().format(DateTimeFormatter.ofPattern("H:m:s")) + "\t\t");
-        System.out.print("<" + Thread.currentThread().getName() + ">\t\t");
+        String fullMessage = "";
+
+        fullMessage += LocalDateTime.now().format(DateTimeFormatter.ofPattern("H:m:s")) + "\t\t";
+        fullMessage += "<" + Thread.currentThread().getName() + ">\t\t";
 
         if (_indent > 0) {
-            for (int i = 0; i < _indent; i++) System.out.print("\t");
-            System.out.print("-> ");
+            for (int i = 0; i < _indent; i++) fullMessage += "\t";
+            fullMessage += "-> ";
         }
 
-        System.out.println(_message + TEXT_RESET);
+        fullMessage += _message + TEXT_RESET;
+
+        System.out.println(fullMessage);
     }
 }

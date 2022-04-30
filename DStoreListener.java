@@ -3,6 +3,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
+import java.net.SocketTimeoutException;
 
 public class DStoreListener extends Thread {
     private Socket dStoreSocket;
@@ -14,9 +15,9 @@ public class DStoreListener extends Thread {
 
     public DStoreListener(Socket _dStoreSocket) throws IOException, NumberFormatException {
         dStoreSocket = _dStoreSocket;
-        dStoreSocket.setSoTimeout(100*1000);
+        dStoreSocket.setSoTimeout(Controller.getTimeout());
         in = new BufferedReader(new InputStreamReader(dStoreSocket.getInputStream()));
-        out = new PrintWriter(dStoreSocket.getOutputStream());
+        out = new PrintWriter(dStoreSocket.getOutputStream(), true);
 
         try {
             clientPort = Integer.valueOf(in.readLine());
@@ -25,35 +26,43 @@ public class DStoreListener extends Thread {
         } catch (IOException e) {
             Message.error("failed to get client listening port", 1);
 
+            cleanUp();
+
             throw e;
         } catch (NumberFormatException e) {
             Message.error("client listening port is invalid", 1);
+
+            cleanUp();
 
             throw e;
         }
     }
 
     public void run() {
-        try {
-            while (true) {
+        while (isConnected()) {
+            try {
                 String packet = in.readLine();
                 processPacket(packet);
-            }
-        } catch (IOException e) {
-            Message.info("dstore connection closed", 0);
-        } finally {
-            out.close();
-            try {
-                in.close();
-                dStoreSocket.close();
+            } catch (SocketTimeoutException e) {
             } catch (IOException e) {
-                e.printStackTrace();
+                cleanUp();
             }
-
-            dStoreSocket = null;
-
-            Controller.getDStoreListeners().remove(this);
         }
+
+        Message.info("dstore connection closed", 0);
+    }
+
+    private void cleanUp() {
+        out.close();
+
+        try {
+            in.close();
+            dStoreSocket.close();
+        } catch (IOException e1) {
+            e1.printStackTrace();
+        }
+
+        dStoreSocket = null;
     }
 
     /**
@@ -157,9 +166,9 @@ public class DStoreListener extends Thread {
     }
 
     public void sentToDStore(String _packet) throws IOException {
-        PrintWriter pr = new PrintWriter(dStoreSocket.getOutputStream());
-        pr.println(_packet);
-        pr.flush();        
+        Message.info("sending to dstore: " + _packet, 1);
+
+        out.println(_packet);    
     }
 
     public void removeFile(String _fileName) throws IOException, InterruptedException, TimeoutException {

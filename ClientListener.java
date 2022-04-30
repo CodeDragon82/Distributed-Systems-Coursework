@@ -231,7 +231,7 @@ public class ClientListener extends Thread {
         BooleanSupplier condition = () -> Index.getStoreAcks(_fileName) 
                                             == Controller.getDStoreListeners().size();
         try {
-            ConditionTimeout.waitFor(condition, Controller.getTimeout());
+            ConditionTimeout.waitForCondition(condition, Controller.getTimeout());
         } catch (TimeoutException e) {
 
             // If waiting times out, then remove file from the index.

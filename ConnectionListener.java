@@ -43,7 +43,6 @@ public class ConnectionListener extends Thread {
                     BufferedReader bf = new BufferedReader(in);
                     
                     String firstPacket = bf.readLine();
-                    System.out.println(firstPacket);
                     if (firstPacket.equals("JOIN")) {
                         connectionFromDStore(newConnection);
                     } else {

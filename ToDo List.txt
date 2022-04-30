@@ -4,3 +4,4 @@
 [ ] Fix dstore reconnect
 [/] Only serve clients if R dstores are connected.
 [ ] Fix client connecting process.
+[ ] Fix rebalance messages.

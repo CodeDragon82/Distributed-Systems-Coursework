@@ -43,7 +43,6 @@ public class DClientListener extends Thread {
 
                 BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
                 String packet = in.readLine();
-                in.close();
                 
                 processPacket(packet);
             } catch (IOException e) {
@@ -55,7 +54,6 @@ public class DClientListener extends Thread {
     private void respond(String _packet) throws IOException {
         PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
         out.println(_packet);
-        out.close();
 
         Message.info("sent response: " + _packet, 1);
     }
@@ -257,14 +255,20 @@ public class DClientListener extends Thread {
         // Send acknowledgement to other dstore.
         respond("ACK");
 
+        Message.info("sending acknowledgement", 1);
+
         // Receive file content from the other dstore.
         byte[] fileBytes = socket.getInputStream().readNBytes(_fileSize);
         String fileContent = new String(fileBytes);
+
+        Message.info("received file data: " + _fileName, 1);
 
         // Create a file and write the file content to it.
         File file = new File(DStore.getFileFolder(), _fileName);
         FileWriter fileWriter = new FileWriter(file);
         fileWriter.write(fileContent);
         fileWriter.close();
+
+        Message.info("wrote file data to new file: " + _fileName, 1);
     }
 }
