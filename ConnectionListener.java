@@ -16,9 +16,9 @@ public class ConnectionListener extends Thread {
 
     public ConnectionListener(int _port) throws IOException {
         try {
-            Message.process("opening server socket", 1);
             connectSocket = new ServerSocket(_port);
-            Message.success("server socket opened on port " + _port, 1);
+
+            Message.info("server socket opened on port " + _port, 1);
         } catch (IOException e) {
             Message.error("failed to open server socket on port " + _port, 1);
             

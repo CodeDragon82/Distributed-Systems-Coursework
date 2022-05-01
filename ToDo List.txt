@@ -4,4 +4,7 @@
 [ ] Fix dstore reconnect
 [/] Only serve clients if R dstores are connected.
 [ ] Fix client connecting process.
-[ ] Fix rebalance messages.
+[/] Fix rebalance messages.
+[ ] Check if port is available.
+[ ] Execute rebalance when a dstore joins.
+[ ] Update file index on after rebalance.

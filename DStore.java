@@ -12,9 +12,9 @@ public class DStore {
     private static File fileFolder;
 
     public static void main(String[] args) {
-        if (setupDStore(args))
-            if (connectToController())
-                setupClientListener();
+        if (!setupDStore(args)) return;
+        if (!setupClientListener()) return;
+        connectToController();
     }
 
     /**
@@ -106,29 +106,28 @@ public class DStore {
      * 
      * Returns true if connection was successful.
      */
-    private static boolean connectToController() {
+    private static void connectToController() {
         Message.process("setting up controller listener", 0);
 
         try {
             InetAddress ip = InetAddress.getLocalHost();
             controllerListener = new ControllerListener(ip, cport);
             controllerListener.setName("cont");
-            controllerListener.start();
 
             Message.success("controller listener setup", 0);
+
+            controllerListener.start();
         } catch (IOException e) {
             Message.failed("failed to setup controller listener", 0);
-
-            return false;
         }
-
-        return true;
     }
 
     /**
      * Setup a listener to send and receive messages to and from the client.
+     * 
+     * Return true if the setup was successful.
      */
-    private static void setupClientListener() {
+    private static boolean setupClientListener() {
         Message.process("setting up client listener", 0);
 
         try {
@@ -140,7 +139,11 @@ public class DStore {
             dClientListener.start();
         } catch (IOException e) {
             Message.failed("failed to setup client listener", 0);
+
+            return false;
         }
+
+        return true;
     }
 
     public static int getServerPort() { return port; }

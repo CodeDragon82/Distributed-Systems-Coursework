@@ -28,8 +28,7 @@ public class ClientListener extends Thread {
         out = new PrintWriter(clientSocket.getOutputStream(), true);
 
         packetQueue = new LinkedList<String>();
-
-        processPacket(_firstPacket);
+        packetQueue.add(_firstPacket);
     }
 
     @Override

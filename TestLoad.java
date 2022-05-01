@@ -16,8 +16,6 @@ public class TestLoad {
         BufferedReader in = new BufferedReader(new InputStreamReader(controllerSocket.getInputStream()));
         PrintWriter out = new PrintWriter(controllerSocket.getOutputStream(), true);
 
-        out.println("");
-        Thread.sleep(500);
         out.println("LOAD " + fileName);
 
         String packet = in.readLine();

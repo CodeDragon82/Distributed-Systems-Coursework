@@ -1,6 +1,5 @@
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -11,7 +10,8 @@ import java.net.Socket;
 import java.net.SocketTimeoutException;
 
 /**
- * Used by the dstore to listen to send and receive messages to and from the client.
+ * Used by the dstore to listen to send and receive 
+ * messages to and from the client and other dstores.
  */
 public class DClientListener extends Thread {
     private static ServerSocket serverSocket;
@@ -20,9 +20,8 @@ public class DClientListener extends Thread {
 
     public DClientListener(int _port) throws IOException {
         try {
-            Message.process("opening server socket", 1);
             serverSocket = new ServerSocket(_port);
-            Message.success("server socket opened on port " + _port, 1);
+            Message.info("server socket opened on port " + _port, 1);
         } catch (IOException e) {
             Message.error("failed to open server socket on port " + _port, 1);
             

@@ -69,11 +69,11 @@ public class ControllerListener extends Thread {
     public void run() {
         while (true) {
             try {
-                while (true) {
-                    String packet = in.readLine();
-                    processPacket(packet);
-                }
+                String packet = in.readLine();
+                processPacket(packet);
             } catch (SocketTimeoutException e) {
+                // Read timeout.
+                // Normal behaviour.
             } catch (SocketException e) {
                 Message.info("controller conneciton closed", 0);
 

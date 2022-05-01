@@ -61,6 +61,9 @@ public class RebalanceAlgorithm {
         currentFileDistribution.add(fileStore);
     }
 
+
+
+
     //// CALCULATE NEW FILE DISTRIBUTION ////
 
     /**
@@ -163,6 +166,8 @@ public class RebalanceAlgorithm {
             }
         }
     }
+
+
 
     //// GENERATE REBALANCE MESSAGES ////
 

@@ -6,14 +6,16 @@ public class RebalanceModule {
 
     private static Timer timer;
 
-    private static boolean rebalancing;
+    private static Flag rebalancing;
 
-    private static Flag rebalanceFlag;
-    private static Flag listFlag;
+    private static Flag rebalanceAck;
+    private static Flag listAck;
 
     public static void scheduleRebalance() {
-        rebalanceFlag = new Flag();
-        listFlag = new Flag();
+        rebalancing = new Flag();
+
+        rebalanceAck = new Flag();
+        listAck = new Flag();
 
         TimerTask timerTask = new TimerTask() {
             @Override
@@ -30,7 +32,7 @@ public class RebalanceModule {
 
     public static void startRebalance() {
         try {
-            rebalancing = true;
+            rebalancing.set();
             rebalance();
         } catch (IOException e) {
             e.printStackTrace();
@@ -43,7 +45,7 @@ public class RebalanceModule {
 
             Message.failed("rebalancing operation failed", 0);
         } finally {
-            rebalancing = false;
+            rebalancing.reset();
         }
     }
 
@@ -62,11 +64,12 @@ public class RebalanceModule {
 
         Message.info("getting file listings from dstores", 1);
         for (DStoreListener dStoreListener : Controller.getDStoreListeners()) {
-            listFlag.reset();
+            listAck.reset();
 
             dStoreListener.sentToDStore("LIST");
 
-            ConditionTimeout.waitForFlag(listFlag, Controller.getTimeout());
+            // Wait for LIST acknowledgement.
+            ConditionTimeout.waitForFlag(listAck, Controller.getTimeout());
         }
 
         Message.info("running rebalance algorithm", 1);
@@ -77,25 +80,30 @@ public class RebalanceModule {
         for (int i = 0; i < packets.length; i++) {
             String packet = packets[i];
 
-            rebalanceFlag.reset();
+            rebalanceAck.reset();
 
             DStoreListener dStoreListener = Controller.getDStoreListeners().get(i);
             dStoreListener.sentToDStore(packet);
 
-            ConditionTimeout.waitForFlag(rebalanceFlag, Controller.getTimeout());
+            // Wait for REBALANCE acknowledgement.
+            ConditionTimeout.waitForFlag(rebalanceAck, Controller.getTimeout());
         }
 
         Message.success("rebalancing finished successfully", 0);
     }
 
-    public static boolean isRebalancing() { return rebalancing; }
+    public static boolean isRebalancing() { return rebalancing.isSet(); }
 
-    public static void setListFlag() { 
-        listFlag.set();
-        System.out.println(listFlag.isSet());
+    /**
+     * LIST acknowledge is set when the dstore listener receives a LIST response.
+     */
+    public static void setListAck() { 
+        listAck.set();
     }
 
-    public static void setRebalanceFlag() { rebalanceFlag.set(); }
+    public static void setRebalanceAck() { 
+        rebalanceAck.set();
+    }
 
     /**
      * Map listed files to their corrsponding dstores (ports).

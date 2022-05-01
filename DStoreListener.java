@@ -118,7 +118,7 @@ public class DStoreListener extends Thread {
 
         Message.info("giving files to rebalancing operation", 1);
         RebalanceModule.addFileList(clientPort, _arguments);
-        RebalanceModule.setListFlag();
+        RebalanceModule.setListAck();
     }
 
     private void processRemoveAck(String[] _arguments) throws PacketException {
@@ -158,7 +158,7 @@ public class DStoreListener extends Thread {
             throw new PacketException("REBALANCE_COMPLETE command must have no arugments");
         }
 
-        RebalanceModule.setRebalanceFlag();
+        RebalanceModule.setRebalanceAck();
     }
 
     private void processError(String _error) {

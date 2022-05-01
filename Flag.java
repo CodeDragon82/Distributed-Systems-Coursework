@@ -16,6 +16,9 @@ public class Flag {
         value = true;
     }
 
+    /**
+     * Returns the boolean value of the flag.
+     */
     public boolean isSet() {
         return value;
     }
