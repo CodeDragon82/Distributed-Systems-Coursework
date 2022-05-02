@@ -4,6 +4,9 @@
 public class Count {
     private volatile int value;
 
+    /**
+     * By default the value of count is set to 0.
+     */
     public Count() {
         value = 0;
     }

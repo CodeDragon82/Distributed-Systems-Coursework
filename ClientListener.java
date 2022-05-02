@@ -7,6 +7,7 @@ import java.net.Socket;
 /**
  * Maintains a connection with a single client, on a seperate thread.
  * 
+ * - Used by the controller.
  * - Receives messages.
  */
 public class ClientListener extends Thread {
@@ -17,41 +18,42 @@ public class ClientListener extends Thread {
      */
     private BufferedReader in;
 
-
+    /**
+     * Sends response packets back to the client.
+     */
     private PrintWriter out;
+
+    private String firstPacket;
 
     public ClientListener(Socket _clientSocket, String _firstPacket) throws IOException {
         clientSocket = _clientSocket;
-        clientSocket.setSoTimeout(100*1000);
 
         in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
         out = new PrintWriter(clientSocket.getOutputStream(), true);
+
+        firstPacket = _firstPacket;
     }
 
     @Override
     public void run() {
         try {
-            while (true) {
-                ConditionTimeout.waitForFlag(RebalanceModule.getRebalancingFlag(), Controller.getTimeout());
+            processPacket(firstPacket);
+        } catch (IOException e1) {
+            e1.printStackTrace();
+        }
 
-                String packet = in.readLine();
-                Message.process("processing incoming packet from client: " + packet, 0);
-                processPacket(packet);
-            }
-        } catch (IOException e) {
-            Message.info("client connection closed", 0);
-        } catch (TimeoutException e) {
-            Message.error("timeed out waiting for rebalancing to finish", 0);
-        } finally {
-            out.close();
+        while (isConnected()) {
             try {
-                in.close();
-                clientSocket.close();
+                if (!RebalanceModule.isRebalancing()) {
+                    String packet = in.readLine();
+                    Message.process("processing incoming packet from client: " + packet, 0);
+                    processPacket(packet);
+                }
             } catch (IOException e) {
-                e.printStackTrace();
-            }
+                closeConnection();
 
-            clientSocket = null;
+                Message.info("client connection closed", 0);
+            }
         }
     }
 
@@ -64,6 +66,18 @@ public class ClientListener extends Thread {
         if (clientSocket.isClosed()) return false;
 
         return true;
+    }
+
+    private void closeConnection() {
+        out.close();
+        try {
+            in.close();
+            clientSocket.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        clientSocket = null;
     }
 
     /**

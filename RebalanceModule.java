@@ -21,6 +21,8 @@ public class RebalanceModule {
             @Override
             public void run() { 
                 if (Controller.enoughDStores()) startRebalance();
+                else Message.info("waiting for " + Controller.getReplicationFactor() 
+                                    + " dstore to join", 0);
             }
         };
 
@@ -94,10 +96,6 @@ public class RebalanceModule {
 
     public static boolean isRebalancing() { 
         return rebalancing.isSet(); 
-    }
-
-    public static Flag getRebalancingFlag() {
-        return rebalancing;
     }
 
     /**

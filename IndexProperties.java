@@ -1,6 +1,9 @@
 public class IndexProperties {
     public int fileSize;
 
+    /**
+     * Flag is set if the file is currently in the process of being stored.
+     */
     public Flag storeInProcess;
 
     /**
@@ -19,12 +22,12 @@ public class IndexProperties {
     public IndexProperties(int _fileSize) {
         fileSize = _fileSize; 
 
-        storeInProcess.reset();;
-        storeAcks.reset();
+        storeInProcess = new Flag();
+        storeAcks = new Count();
 
-        removeInProcess.reset();;
-        removeAck.reset();
+        removeInProcess = new Flag();
+        removeAck = new Flag();
 
-        loadAttempt.reset();
+        loadAttempt = new Count();
     }
 }

@@ -20,9 +20,7 @@ public class Controller {
 
             RebalanceModule.scheduleRebalance();
 
-            Index.addFile("file1.txt", 11);
-            Index.addFile("file2.txt", 7);
-            Index.addFile("file3.txt", 7);
+            Index.addFile("test1.txt", 11);
 
             commandShell();
         }
@@ -62,6 +60,7 @@ public class Controller {
 
         Index.setup();
 
+        clientListeners = new ArrayList<ClientListener>();
         dStoreListeners = new ArrayList<DStoreListener>();
 
         //// Validating arguments ////

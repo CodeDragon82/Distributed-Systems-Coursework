@@ -39,10 +39,9 @@ public class ConnectionListener extends Thread {
                             + ":" + newConnection.getPort(), 1);
 
                 try {
-                    InputStreamReader in = new InputStreamReader(newConnection.getInputStream());
-                    BufferedReader bf = new BufferedReader(in);
+                    BufferedReader in = new BufferedReader(new InputStreamReader(newConnection.getInputStream()));
                     
-                    String firstPacket = bf.readLine();
+                    String firstPacket = in.readLine();
                     if (firstPacket.equals("JOIN")) {
                         connectionFromDStore(newConnection);
                     } else {
@@ -71,6 +70,7 @@ public class ConnectionListener extends Thread {
 
         } catch (Exception e) {
             Message.error("failed to create client listener", 1);
+            e.printStackTrace();
             Message.failed("", 0);
         }
     }
