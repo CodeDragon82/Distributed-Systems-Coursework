@@ -92,7 +92,13 @@ public class RebalanceModule {
         Message.success("rebalancing finished successfully", 0);
     }
 
-    public static boolean isRebalancing() { return rebalancing.isSet(); }
+    public static boolean isRebalancing() { 
+        return rebalancing.isSet(); 
+    }
+
+    public static Flag getRebalancingFlag() {
+        return rebalancing;
+    }
 
     /**
      * LIST acknowledge is set when the dstore listener receives a LIST response.

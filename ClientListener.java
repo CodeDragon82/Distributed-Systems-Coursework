@@ -3,9 +3,6 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
-import java.util.LinkedList;
-import java.util.Queue;
-import java.util.function.BooleanSupplier;
 
 /**
  * Maintains a connection with a single client, on a seperate thread.
@@ -15,10 +12,13 @@ import java.util.function.BooleanSupplier;
 public class ClientListener extends Thread {
     private Socket clientSocket;
 
+    /**
+     * Receives incoming packets and adds them to a queue.
+     */
     private BufferedReader in;
-    private PrintWriter out;
 
-    private Queue<String> packetQueue;
+
+    private PrintWriter out;
 
     public ClientListener(Socket _clientSocket, String _firstPacket) throws IOException {
         clientSocket = _clientSocket;
@@ -26,44 +26,22 @@ public class ClientListener extends Thread {
 
         in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
         out = new PrintWriter(clientSocket.getOutputStream(), true);
-
-        packetQueue = new LinkedList<String>();
-        packetQueue.add(_firstPacket);
     }
 
     @Override
     public void run() {
         try {
-            String packet;
-
             while (true) {
-                // If rebalancing, then queue client packets.
-                if (RebalanceModule.isRebalancing()) {
-                    packet = in.readLine();
+                ConditionTimeout.waitForFlag(RebalanceModule.getRebalancingFlag(), Controller.getTimeout());
 
-                    Message.info("queueing incoming client packet: " + packet, 0);
-
-                    packetQueue.add(packet);
-
-                // If not rebalancing and queue is empty, then process incoming client packets.
-                } else if (packetQueue.isEmpty()) {
-                    packet = in.readLine();
-
-                    Message.process("processing incoming packet from client: " + packet, 0);
-
-                    processPacket(packet);
-
-                // If not rebalancing and queue is not empty, then process queued packets.
-                } else {
-                    packet = packetQueue.poll();
-
-                    Message.process("processing packet from queue: " + packet, 0);
-
-                    processPacket(packet);
-                }
+                String packet = in.readLine();
+                Message.process("processing incoming packet from client: " + packet, 0);
+                processPacket(packet);
             }
         } catch (IOException e) {
             Message.info("client connection closed", 0);
+        } catch (TimeoutException e) {
+            Message.error("timeed out waiting for rebalancing to finish", 0);
         } finally {
             out.close();
             try {
@@ -147,6 +125,8 @@ public class ClientListener extends Thread {
         }
     }
 
+
+
     //// STORE OPERATION ////
 
     /**
@@ -227,10 +207,10 @@ public class ClientListener extends Thread {
         respondToClient("STORE_TO" + dStorePorts);
 
         // Wait for number of received store acks to match the number of dstores.
-        BooleanSupplier condition = () -> Index.getStoreAcks(_fileName) 
-                                            == Controller.getDStoreListeners().size();
         try {
-            ConditionTimeout.waitForCondition(condition, Controller.getTimeout());
+            ConditionTimeout.waitForCount(Index.getStoreAcks(_fileName), 
+                                          Controller.getDStoreListeners().size(), 
+                                          Controller.getTimeout());
         } catch (TimeoutException e) {
 
             // If waiting times out, then remove file from the index.
@@ -244,6 +224,8 @@ public class ClientListener extends Thread {
 
         respondToClient("STORE_COMPLETE");
     }
+
+
 
     //// LOAD OPERATION ////
 
@@ -332,6 +314,8 @@ public class ClientListener extends Thread {
         respondToClient("LOAD_FROM " + dStorePort + " " + fileSize);
     }
 
+
+
     //// REMOVE OPERATION ////
 
     /**
@@ -413,13 +397,12 @@ public class ClientListener extends Thread {
         respondToClient("REMOVE_COMPLETE");
     }
 
+
+
     //// LIST OPERATION ////
 
     /**
      * Process LIST request from client.
-     * @param _arguments
-     * @throws PacketException
-     * @throws IOException
      */
     private void processList(String[] _arguments) throws PacketException, IOException {
         Message.info("LIST request", 1);

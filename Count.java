@@ -1,3 +1,6 @@
+/**
+ * Mutatable and volatile integer variable that can be passed by reference.
+ */
 public class Count {
     private volatile int value;
 

@@ -64,8 +64,8 @@ public class Index {
         files.get(_fileName).storeAcks.increment();
     }
 
-    public static int getStoreAcks(String _fileName) {
-        return files.get(_fileName).storeAcks.getCount();
+    public static Count getStoreAcks(String _fileName) {
+        return files.get(_fileName).storeAcks;
     }
 
 

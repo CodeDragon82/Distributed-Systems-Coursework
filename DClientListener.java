@@ -108,6 +108,8 @@ public class DClientListener extends Thread {
         }
     }
 
+
+    
     //// STORE OPERATION ////
 
     /**
@@ -165,7 +167,7 @@ public class DClientListener extends Thread {
 
         // Write file content to new file.
         File file = new File(DStore.getFileFolder(), _fileName);
-        FileWriter fileWriter = new FileWriter(_fileName);
+        FileWriter fileWriter = new FileWriter(file);
         fileWriter.write(fileContent);
         fileWriter.close();
 
@@ -173,6 +175,7 @@ public class DClientListener extends Thread {
     }
 
     
+
     //// LOAD DATA OPERATION ////
 
     /**
@@ -215,6 +218,8 @@ public class DClientListener extends Thread {
 
         sentData(fileContent);
     }
+
+
 
     //// REBALANCE STORE OPERATION ////
 
