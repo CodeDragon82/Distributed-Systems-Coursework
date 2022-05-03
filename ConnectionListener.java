@@ -38,18 +38,12 @@ public class ConnectionListener extends Thread {
                             + newConnection.getInetAddress().getHostAddress() 
                             + ":" + newConnection.getPort(), 1);
 
-                try {
-                    BufferedReader in = new BufferedReader(new InputStreamReader(newConnection.getInputStream()));
-                    
-                    String firstPacket = in.readLine();
-                    if (firstPacket.equals("JOIN")) {
-                        connectionFromDStore(newConnection);
-                    } else {
-                        connectionFromClient(newConnection, firstPacket);
-                    }
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }        
+                BufferedReader in = new BufferedReader(new InputStreamReader(newConnection.getInputStream()));
+                
+                String firstPacket = in.readLine();
+                if (firstPacket.equals("JOIN")) connectionFromDStore(newConnection);
+                else connectionFromClient(newConnection, firstPacket);
+                
             } catch (IOException e) {
                 Message.info("connection listener crashed (creating new socket)", 1);
             }
@@ -86,6 +80,9 @@ public class ConnectionListener extends Thread {
 
             Message.info("set dstore listener", 1);
             Message.success("", 0);
+
+            // Start rebalancing operation when a dstore joins.
+            RebalanceModule.startRebalance();
         } catch (Exception e) {
             Message.error("failed to create dstore listener", 1);
             Message.failed("", 0);

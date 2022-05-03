@@ -1,0 +1,9 @@
+Connection established to port 5555
+Message sent to port 5555: LIST
+List operation started
+Message received from port 5555: LIST
+List operation successfully completed
+Message sent to port 5555: LIST
+List operation started
+Message received from port 5555: LIST
+List operation successfully completed

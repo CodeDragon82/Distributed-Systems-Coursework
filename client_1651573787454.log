@@ -1,0 +1,12 @@
+Connection established to port 5555
+Message sent to port 5555: LIST
+List operation started
+Message received from port 5555: LIST
+List operation successfully completed
+Message sent to port 5555: STORE test1.txt 11
+Store operation started for file test1.txt
+Message received from port 5555: STORE_TO 1111 2222 3333
+Controller replied to store test1.txt in these Dstores: 1111 2222 3333 
+Connection established to port 1111
+Message sent to port 1111: STORE test1.txt 11
+Storing file test1.txt to Dstore 1111

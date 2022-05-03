@@ -183,22 +183,6 @@ public class ClientListener extends Thread {
             return false;
         }
 
-        // Check if file is in "process of being stored".
-        if (Index.isFileBeingStored(fileName)) {
-            Message.info("file is in the process of being stored", 1);
-
-            respondToClient("ERROR_FILE_ALREADY_EXISTS");
-            return false;
-        }
-
-        // Check if file is in "process of being removed".
-        if (Index.isFileBeingRemoved(fileName)) {
-            Message.info("file is in the process of being removed", 1);
-
-            respondToClient("ERROR_FILE_ALREADY_EXISTS");
-            return false;
-        }
-
         return true;
     }
 

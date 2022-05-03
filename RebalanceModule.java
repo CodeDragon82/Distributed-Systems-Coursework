@@ -21,8 +21,7 @@ public class RebalanceModule {
             @Override
             public void run() { 
                 if (Controller.enoughDStores()) startRebalance();
-                else Message.info("waiting for " + Controller.getReplicationFactor() 
-                                    + " dstore to join", 0);
+                else Message.info("waiting for more dstores to join", 0);
             }
         };
 
@@ -32,7 +31,12 @@ public class RebalanceModule {
         timer.schedule(timerTask, interval, interval);
     }
 
+    /**
+     * Starts a rebalancing operation if rebalancing isn't already running.
+     */
     public static void startRebalance() {
+        if (rebalancing.isSet()) return;
+        
         try {
             rebalancing.set();
             rebalance();
