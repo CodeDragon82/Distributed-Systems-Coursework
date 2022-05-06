@@ -171,25 +171,20 @@ public class DStoreListener extends Thread {
         out.println(_packet);    
     }
 
-    public void removeFile(String _fileName) throws IOException, InterruptedException, TimeoutException {
+    public void removeFile(String _fileName) throws IOException, TimeoutException {
+        // Set the remove ACK flag to false.
         Index.setRemoveAck(_fileName, false);
 
+        // Send REMOVE instruction to dstore.
         sentToDStore("REMOVE " + _fileName);
 
-        int timeWaited = 0;
-        while(timeWaited <= Controller.getTimeout()) {
-            if (Index.getRemoveAck(_fileName)) {
-                Message.info("removed " + _fileName + " from dstore ", 1);
-                
-                Index.setRemoveAck(_fileName, false);
-                return;
-            }
+        // Wait to receive remove ACK from dstore.
+        ConditionTimeout.waitForFlag(Index.getRemoveAck(_fileName), Controller.getTimeout());
 
-            timeWaited += 100;
-            Thread.sleep(100);
-        }
+        Message.info("removed " + _fileName + " from dstore ", 1);
 
-        throw new TimeoutException("dstore didn't respond with an ACK");
+        // Reset the remove ACK flag to false.
+        Index.setRemoveAck(_fileName, false);
     }
 
     public Socket getSocket() { return dStoreSocket; }

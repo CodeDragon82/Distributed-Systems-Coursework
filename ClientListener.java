@@ -38,8 +38,19 @@ public class ClientListener extends Thread {
     public void run() {
         try {
             processPacket(firstPacket);
-        } catch (IOException e1) {
-            e1.printStackTrace();
+        } catch (PacketException e) {
+            Message.error(e.getMessage(), 1);
+
+            Message.failed("failed to process packet", 0);
+        } catch (TimeoutException e) {
+            Message.error(e.getMessage(), 1);
+
+            Message.failed("processing packet timed out", 0);
+        } catch (IOException e) {
+            closeConnection();
+
+            e.printStackTrace();
+            Message.info("client connection closed", 0);
         }
 
         while (isConnected()) {
@@ -47,11 +58,23 @@ public class ClientListener extends Thread {
                 if (!RebalanceModule.isRebalancing()) {
                     String packet = in.readLine();
                     Message.process("processing incoming packet from client: " + packet, 0);
+                    
                     processPacket(packet);
+
+                    Message.success("packet processed correctly", 0);
                 }
+            } catch (PacketException e) {
+                Message.error(e.getMessage(), 1);
+
+                Message.failed("failed to process packet", 0);
+            } catch (TimeoutException e) {
+                Message.error(e.getMessage(), 1);
+
+                Message.failed("processing packet timed out", 0);
             } catch (IOException e) {
                 closeConnection();
 
+                e.printStackTrace();
                 Message.info("client connection closed", 0);
             }
         }
@@ -82,9 +105,6 @@ public class ClientListener extends Thread {
 
     /**
      * Send response packet to client.
-     * 
-     * @param _packet
-     * @throws IOException
      */
     private void respondToClient(String _packet) throws IOException {
         out.println(_packet);
@@ -92,14 +112,8 @@ public class ClientListener extends Thread {
         Message.info("sent response: " + _packet, 1);
     }
 
-    private void processPacket(String _packet) throws IOException {
-        if (_packet == null) {
-            Message.error("received null packet", 1);
-
-            Message.failed("couldn't process packet", 0);
-
-            throw new IOException();
-        }
+    private void processPacket(String _packet) throws PacketException, IOException, TimeoutException {
+        if (_packet == null) throw new PacketException("received null packet");
 
         String[] packetContent = _packet.split(" ");
         String command = "";
@@ -115,28 +129,12 @@ public class ClientListener extends Thread {
                 arguments[i] = packetContent[i + 1];
         }
 
-        try {
-            if (command.equals("STORE")) processStore(arguments);
-            else if (command.equals("LOAD")) processLoad(arguments);
-            else if (command.equals("RELOAD")) processReload(arguments);
-            else if (command.equals("REMOVE")) processRemove(arguments);
-            else if (command.equals("LIST")) processList(arguments);
-            else throw new PacketException("incorrect/missing command");
-
-            Message.success("packet processed correctly", 0);
-        } catch (PacketException e) {
-            Message.error(e.getMessage(), 1);
-
-            Message.failed("couldn't process packet", 0);
-        } catch (TimeoutException e) {
-            Message.error(e.getMessage(), 1);
-
-            Message.failed("processing packet timedout", 0);
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
+        if (command.equals("STORE")) processStore(arguments);
+        else if (command.equals("LOAD")) processLoad(arguments);
+        else if (command.equals("RELOAD")) processReload(arguments);
+        else if (command.equals("REMOVE")) processRemove(arguments);
+        else if (command.equals("LIST")) processList(arguments);
+        else throw new PacketException("incorrect/missing command");
     }
 
 
@@ -319,7 +317,7 @@ public class ClientListener extends Thread {
     /**
      * Process REMOVE request from client.
      */
-    private void processRemove(String[] _arguments) throws PacketException, IOException, InterruptedException, TimeoutException{
+    private void processRemove(String[] _arguments) throws PacketException, IOException, TimeoutException{
         Message.info("REMOVE request", 1);
 
         if (validateRemove(_arguments)) performRemove(_arguments[0]);
@@ -368,7 +366,7 @@ public class ClientListener extends Thread {
         return true;
     }
     
-    private void performRemove(String _fileName) throws IOException, InterruptedException, TimeoutException {
+    private void performRemove(String _fileName) throws IOException, TimeoutException {
 
         // Set "removing file in process" to true.
         Index.removingFile(_fileName, true);

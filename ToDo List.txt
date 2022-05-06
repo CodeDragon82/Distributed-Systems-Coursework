@@ -6,5 +6,5 @@
 [ ] Fix client connecting process.
 [/] Fix rebalance messages.
 [ ] Check if port is available.
-[ ] Execute rebalance when a dstore joins.
+[/] Execute rebalance when a dstore joins.
 [ ] Update file index on after rebalance.

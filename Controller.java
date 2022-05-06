@@ -20,10 +20,6 @@ public class Controller {
 
             RebalanceModule.scheduleRebalance();
 
-            Index.addFile("test1.txt", 11);
-            Index.addFile("test2.txt", 7);
-            Index.addFile("test3.txt", 7);
-
             commandShell();
         }
     }

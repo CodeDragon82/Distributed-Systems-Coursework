@@ -92,8 +92,8 @@ public class Index {
         else files.get(_fileName).removeAck.reset();
     }
 
-    public static boolean getRemoveAck(String _fileName) { 
-        return files.get(_fileName).removeAck.isSet();
+    public static Flag getRemoveAck(String _fileName) { 
+        return files.get(_fileName).removeAck;
     }
 
 

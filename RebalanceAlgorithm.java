@@ -40,7 +40,7 @@ public class RebalanceAlgorithm {
     /**
      * Add set of files from a dstore to the current file distribution.
      * 
-     * Each file is also added to the file map, which maps files to dstore.
+     * Each file is also added to the file map, which maps files to dstores.
      * @param port
      * @param files
      */
