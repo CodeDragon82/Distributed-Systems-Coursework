@@ -19,36 +19,7 @@ public class Controller {
             listenForConnections();
 
             RebalanceModule.scheduleRebalance();
-
-            commandShell();
         }
-    }
-
-    private static void commandShell() throws IOException {
-        BufferedReader keyboard = new BufferedReader(new InputStreamReader(System.in));
-    
-        while (true) {
-            String command = keyboard.readLine();
-            System.out.println();
-
-            if (command.equals("help")) displayHelp();
-            else if (command.equals("connections")) displayConnections();
-        }
-    }
-
-    private static void displayHelp() {
-        System.out.println("help");
-    }
-
-    private static void displayConnections() {
-        System.out.println("DStores\n-------");
-
-        getDStoreListeners().stream().forEach(ds -> System.out.println("DStore\t" 
-                                                                + "connection on port: "
-                                                                + ds.getSocket().getPort()
-                                                                + "\tlistening to clients on port: "
-                                                                + ds.getClientPort()));
-
     }
 
     private static boolean setupServer(String[] _args) {
