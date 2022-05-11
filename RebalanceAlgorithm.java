@@ -55,7 +55,7 @@ public class RebalanceAlgorithm {
         if (ports.stream().anyMatch(_port -> _port == port ))
             throw new RebalanceException("store with the port " + port + " has already been added");
 
-        if (storeCount >= currentFileDistribution.size())
+        if (currentFileDistribution.size() >= storeCount)
             throw new RebalanceException("can't add more than " + storeCount + " file stores");
 
         ports.add(port);

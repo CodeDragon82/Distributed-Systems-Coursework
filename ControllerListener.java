@@ -67,7 +67,7 @@ public class ControllerListener extends Thread {
 
     @Override
     public void run() {
-        while (true) {
+        while (isConnected()) {
             try {
                 String packet = in.readLine();
                 processPacket(packet);
