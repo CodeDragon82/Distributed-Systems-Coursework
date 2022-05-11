@@ -2,7 +2,7 @@ import java.io.File;
 import java.io.IOException;
 import java.net.InetAddress;
 
-public class DStore {
+public class Dstore {
     private static ControllerListener controllerListener;
     private static DClientListener dClientListener;
 

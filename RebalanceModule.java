@@ -69,7 +69,7 @@ public class RebalanceModule {
         RebalanceAlgorithm.setup(Controller.getDStoreListeners().size());
 
         Message.info("getting file listings from dstores", 1);
-        for (DStoreListener dStoreListener : Controller.getDStoreListeners()) {
+        for (DstoreListener dStoreListener : Controller.getDStoreListeners()) {
             listAck.reset();
 
             dStoreListener.sentToDStore("LIST");
@@ -88,7 +88,7 @@ public class RebalanceModule {
 
             rebalanceAck.reset();
 
-            DStoreListener dStoreListener = Controller.getDStoreListeners().get(i);
+            DstoreListener dStoreListener = Controller.getDStoreListeners().get(i);
             dStoreListener.sentToDStore(packet);
 
             // Wait for REBALANCE acknowledgement.

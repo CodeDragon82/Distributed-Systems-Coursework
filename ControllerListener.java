@@ -49,7 +49,7 @@ public class ControllerListener extends Thread {
             out = new PrintWriter(controllerSocket.getOutputStream(), true);
 
             // Set reading timeout.
-            controllerSocket.setSoTimeout(DStore.getTimeout());
+            controllerSocket.setSoTimeout(Dstore.getTimeout());
 
             Message.info("input and output streams setup", 1);
         } catch (IOException e) {
@@ -61,7 +61,7 @@ public class ControllerListener extends Thread {
         out.println("JOIN");
         Message.info("sent JOIN message", 1);
 
-        out.println(DStore.getServerPort());
+        out.println(Dstore.getServerPort());
         Message.info("sent server port", 1);
     }
 
@@ -164,7 +164,7 @@ public class ControllerListener extends Thread {
             throw new PacketException("LIST command must have no arguments");
         }
 
-        File[] files = DStore.getFileFolder().listFiles();
+        File[] files = Dstore.getFileFolder().listFiles();
         String fileNames = "";
         for (File file : files) fileNames += " " + file.getName();
 
@@ -179,7 +179,7 @@ public class ControllerListener extends Thread {
         }
 
         String fileName = _arguments[0];
-        File fileToRemove = new File(DStore.getFileFolder(), fileName);
+        File fileToRemove = new File(Dstore.getFileFolder(), fileName);
 
         if (fileToRemove.exists()) fileToRemove.delete();
         else {
@@ -244,7 +244,7 @@ public class ControllerListener extends Thread {
 
         // Send REBALANCE_STORE packet to dstore.
         PrintWriter printWriter = new PrintWriter(socket.getOutputStream(), true);
-        int fileSize = (int) Files.size(Paths.get(DStore.getFileFolder().getAbsolutePath(), _fileName));
+        int fileSize = (int) Files.size(Paths.get(Dstore.getFileFolder().getAbsolutePath(), _fileName));
         String outputPacket = "REBALANCE_STORE " + _fileName + " " + fileSize;
         printWriter.println(outputPacket);
 
@@ -259,7 +259,7 @@ public class ControllerListener extends Thread {
         Message.info("received acknowledgement", 2);
 
         // Read contents of file.
-        File file = new File(DStore.getFileFolder(), _fileName);
+        File file = new File(Dstore.getFileFolder(), _fileName);
         BufferedReader fileReader = new BufferedReader(new FileReader(file));
         String line = fileReader.readLine();
         String fileContent = line;
@@ -282,7 +282,7 @@ public class ControllerListener extends Thread {
     private void removeFile(String _fileName) {
         Message.info("removing file: " + _fileName, 1);
 
-        File file = new File(DStore.getFileFolder(), _fileName);
+        File file = new File(Dstore.getFileFolder(), _fileName);
         file.delete();
         
         Message.info("removed file", 2);

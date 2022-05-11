@@ -5,7 +5,7 @@ import java.io.PrintWriter;
 import java.net.Socket;
 import java.net.SocketTimeoutException;
 
-public class DStoreListener extends Thread {
+public class DstoreListener extends Thread {
     private Socket dStoreSocket;
 
     private BufferedReader in;
@@ -13,7 +13,7 @@ public class DStoreListener extends Thread {
 
     private int clientPort;
 
-    public DStoreListener(Socket _dStoreSocket) throws IOException, NumberFormatException {
+    public DstoreListener(Socket _dStoreSocket) throws IOException, NumberFormatException {
         dStoreSocket = _dStoreSocket;
         dStoreSocket.setSoTimeout(Controller.getTimeout());
         in = new BufferedReader(new InputStreamReader(dStoreSocket.getInputStream()));

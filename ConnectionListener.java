@@ -114,7 +114,7 @@ public class ConnectionListener extends Thread {
         Message.info("connection is from a dstore", 1);
 
         try {
-            DStoreListener dStoreListener = new DStoreListener(_dStoreSocket);
+            DstoreListener dStoreListener = new DstoreListener(_dStoreSocket);
             dStoreListener.setName("dstr");
             Controller.addDStoreListener(dStoreListener);
             dStoreListener.start();

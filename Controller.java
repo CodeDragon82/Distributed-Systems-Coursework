@@ -12,7 +12,7 @@ public class Controller {
     private static int rebalancePeriod;
 
     private static List<ClientListener> clientListeners;
-    private static List<DStoreListener> dStoreListeners;
+    private static List<DstoreListener> dStoreListeners;
 
     public static void main(String[] args) throws IOException, IndexException {
         if (setupServer(args)) {
@@ -59,7 +59,7 @@ public class Controller {
         Index.setup();
 
         clientListeners = new ArrayList<ClientListener>();
-        dStoreListeners = new ArrayList<DStoreListener>();
+        dStoreListeners = new ArrayList<DstoreListener>();
 
         //// Validating arguments ////
         try {
@@ -159,7 +159,7 @@ public class Controller {
     public static boolean enoughDStores() { return dStoreListeners.size() >= replicationFactor; }
 
     public static void setClientListener(ClientListener _clientListener) { clientListeners.add(_clientListener); }
-    public static void addDStoreListener(DStoreListener _dStoreListener) { dStoreListeners.add(_dStoreListener); }
+    public static void addDStoreListener(DstoreListener _dStoreListener) { dStoreListeners.add(_dStoreListener); }
 
     public static List<ClientListener> getClientListener() { 
 
@@ -169,7 +169,7 @@ public class Controller {
         return clientListeners;
     }
 
-    public static List<DStoreListener> getDStoreListeners() {
+    public static List<DstoreListener> getDStoreListeners() {
         
         // Remove unconnected dstores.
         checkDStoreConnections();
@@ -190,7 +190,7 @@ public class Controller {
      * Removes dstore listeners with failed connections.
      */
     private static void checkDStoreConnections() {
-        Predicate<DStoreListener> notConnected = ds -> !ds.isConnected();
+        Predicate<DstoreListener> notConnected = ds -> !ds.isConnected();
 
         dStoreListeners.removeIf(notConnected);
     }

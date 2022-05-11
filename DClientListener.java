@@ -36,7 +36,7 @@ public class DClientListener extends Thread {
 
             try {
                 socket = serverSocket.accept();
-                socket.setSoTimeout(DStore.getTimeout());
+                socket.setSoTimeout(Dstore.getTimeout());
 
                 Message.info("connection from: " + socket.getInetAddress(), 0);
 
@@ -135,7 +135,7 @@ public class DClientListener extends Thread {
 
         // Check if file exists.
         String fileName = _arguments[0];
-        File file = new File(DStore.getFileFolder(), fileName);
+        File file = new File(Dstore.getFileFolder(), fileName);
         if (file.exists()) throw new PacketException("file already exist");
 
         int fileSize;
@@ -166,12 +166,12 @@ public class DClientListener extends Thread {
         }
 
         // Write file content to new file.
-        File file = new File(DStore.getFileFolder(), _fileName);
+        File file = new File(Dstore.getFileFolder(), _fileName);
         FileWriter fileWriter = new FileWriter(file);
         fileWriter.write(fileContent);
         fileWriter.close();
 
-        DStore.getControllerListener().respondToController("STORE_ACK " + _fileName);
+        Dstore.getControllerListener().respondToController("STORE_ACK " + _fileName);
     }
 
     
@@ -186,7 +186,7 @@ public class DClientListener extends Thread {
 
         if (validateLoadData(_arguments)) {
             String fileName = _arguments[0];
-            File file = new File(DStore.getFileFolder(), fileName);
+            File file = new File(Dstore.getFileFolder(), fileName);
 
             performLoadData(file);
         }
@@ -198,7 +198,7 @@ public class DClientListener extends Thread {
         }
 
         String fileName = _arguments[0];
-        File file = new File(DStore.getFileFolder(), fileName);
+        File file = new File(Dstore.getFileFolder(), fileName);
 
         if (!file.exists()) throw new PacketException(fileName + " doesn't exist!");
 
@@ -268,7 +268,7 @@ public class DClientListener extends Thread {
         Message.info("received file data: " + _fileName, 1);
 
         // Create a file and write the file content to it.
-        File file = new File(DStore.getFileFolder(), _fileName);
+        File file = new File(Dstore.getFileFolder(), _fileName);
         FileWriter fileWriter = new FileWriter(file);
         fileWriter.write(fileContent);
         fileWriter.close();

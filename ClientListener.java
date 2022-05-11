@@ -204,7 +204,7 @@ public class ClientListener extends Thread {
 
         // Collect port number from each dstore listener.
         String dStorePorts = "";
-        for (DStoreListener dStoreListener : Controller.getDStoreListeners())
+        for (DstoreListener dStoreListener : Controller.getDStoreListeners())
             dStorePorts += " " + dStoreListener.getClientPort();
 
         respondToClient("STORE_TO" + dStorePorts);
@@ -378,7 +378,7 @@ public class ClientListener extends Thread {
         Index.removingFile(_fileName, true);
 
         // Instruct each dstore to remove the target file.
-        for (DStoreListener dStoreListener : Controller.getDStoreListeners()) {
+        for (DstoreListener dStoreListener : Controller.getDStoreListeners()) {
             try {
                 // Sends a packet to the dstore to remove the file and waits for an ACK message.
                 dStoreListener.removeFile(_fileName);
