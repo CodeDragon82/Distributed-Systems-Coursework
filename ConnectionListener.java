@@ -73,11 +73,14 @@ public class ConnectionListener extends Thread {
         }
     }
 
+    /**
+     * Reads the first packet from the new connection.
+     */
     private String readFirstPacket(Socket _socket) throws ConnectionException {
         String firstPacket = "";
         try {
             BufferedReader in = new BufferedReader(new InputStreamReader(_socket.getInputStream()));
-            in.readLine();
+            firstPacket = in.readLine();
         } catch (IOException e) {
             throw new ConnectionException("couldn't read first packet from new connection");
         }
@@ -85,6 +88,9 @@ public class ConnectionListener extends Thread {
         return firstPacket;
     }
     
+    /**
+     * Sets up a client listener for the newly connected client.
+     */
     private void connectionFromClient(Socket _clientSocket, String _firstPacket) throws ConnectionException {
         Message.info("connection is from a client", 1);
 
@@ -101,6 +107,9 @@ public class ConnectionListener extends Thread {
         }
     }
 
+    /**
+     * Sets up a dstore listener for the newly connected dstore.
+     */
     private void connectionFromDStore(Socket _dStoreSocket) throws ConnectionException {
         Message.info("connection is from a dstore", 1);
 

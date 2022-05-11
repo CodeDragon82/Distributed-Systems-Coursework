@@ -25,6 +25,13 @@ public class ClientListener extends Thread {
 
     private String firstPacket;
 
+    /**
+     * Current loading attempt.
+     * 
+     * Corrosponds to the next dstore to load from.
+     */
+    public Count loadAttempt;
+
     public ClientListener(Socket _clientSocket, String _firstPacket) throws IOException {
         clientSocket = _clientSocket;
 
@@ -185,7 +192,7 @@ public class ClientListener extends Thread {
     }
 
     private void performStore(String _fileName, int _fileSize) throws IOException, PacketException, TimeoutException {
-         // Add file to the file index.
+        // Add file to the file index.
         try {
             Index.addFile(_fileName, _fileSize);
         } catch (IndexException e) {
@@ -287,7 +294,7 @@ public class ClientListener extends Thread {
     }
 
     private void performLoad(String _fileName) throws IOException {
-        Index.resetLoadAttempt(_fileName);
+        loadAttempt.reset();
 
         int dStorePort = Controller.getDStoreListeners().get(0).getClientPort();
         int fileSize = Index.fileSize(_fileName);
@@ -296,15 +303,14 @@ public class ClientListener extends Thread {
     }
 
     private void performReload(String _fileName) throws IOException {
-        Index.incrementLoadAttempt(_fileName);
-        int loadAttempt = Index.getLoadAttempt(_fileName);
+        loadAttempt.increment();
 
-        if (loadAttempt > Controller.getDStoreListeners().size()) {
+        if (loadAttempt.getCount() >= Controller.getDStoreListeners().size()) {
             respondToClient("ERROR_LOAD");
             return;
         }
 
-        int dStorePort = Controller.getDStoreListeners().get(loadAttempt - 1).getClientPort();
+        int dStorePort = Controller.getDStoreListeners().get(loadAttempt.getCount()).getClientPort();
         int fileSize = Index.fileSize(_fileName);
 
         respondToClient("LOAD_FROM " + dStorePort + " " + fileSize);
@@ -388,8 +394,6 @@ public class ClientListener extends Thread {
         // Remove target file from file index.
         Index.removeFile(_fileName);
 
-        //// ////
-
         respondToClient("REMOVE_COMPLETE");
     }
 
@@ -422,14 +426,10 @@ public class ClientListener extends Thread {
 
     private void performList() throws IOException {
         
-        // Collect file names from the file index key set.
-        String files = "";
-        for (String file : Index.listFiles()) {
-            if (!Index.isFileBeingStored(file) && !Index.isFileBeingRemoved(file)) {
-                files += " " + file;
-            }
-        }
+        // Collect file names into one string.
+        String files = String.join(" ", Index.listFiles());
 
-        respondToClient("LIST" + files);
+        // Send list of files to client.
+        respondToClient("LIST " + files);
     }
 }

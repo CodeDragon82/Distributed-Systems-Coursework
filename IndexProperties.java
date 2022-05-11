@@ -14,11 +14,6 @@ public class IndexProperties {
     public Flag removeInProcess;
     public Flag removeAck;
 
-    /**
-     * Corrosponds to then dstore to attempt to load from.
-     */
-    public Count loadAttempt;
-
     public IndexProperties(int _fileSize) {
         fileSize = _fileSize; 
 
@@ -27,7 +22,5 @@ public class IndexProperties {
 
         removeInProcess = new Flag();
         removeAck = new Flag();
-
-        loadAttempt = new Count();
     }
 }

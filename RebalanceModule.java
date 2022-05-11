@@ -117,6 +117,10 @@ public class RebalanceModule {
      * Map listed files to their corrsponding dstores (ports).
      */
     public static void addFileList(int _dstorePort, String[] _files) { 
-        RebalanceAlgorithm.addFileStore(_dstorePort, _files);
+        try {
+            RebalanceAlgorithm.addFileStore(_dstorePort, _files);
+        } catch (RebalanceException e) {
+            Message.error(e.getMessage(), 1);
+        }
     }
 }

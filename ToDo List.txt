@@ -7,4 +7,3 @@
 [/] Fix rebalance messages.
 [ ] Check if port is available.
 [/] Execute rebalance when a dstore joins.
-[ ] Update file index on after rebalance.

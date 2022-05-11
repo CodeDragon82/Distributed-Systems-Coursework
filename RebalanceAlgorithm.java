@@ -1,6 +1,6 @@
 import java.util.Comparator;
 import java.util.HashMap;
-import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.Set;
 import java.util.function.Predicate;
@@ -24,6 +24,10 @@ public class RebalanceAlgorithm {
     // Store the required changes to each file store to rebalance.
     private static StoreChanges[] distributionChanges;
 
+
+
+    //// SET UP ////
+
     public static void setup(int _storeCount) {
         storeCount = _storeCount;
 
@@ -37,17 +41,26 @@ public class RebalanceAlgorithm {
             distributionChanges[i] = new StoreChanges();
     }
 
+
+
+    //// RECORDING CURRENT DISTRIBUTION ////
+
     /**
      * Add set of files from a dstore to the current file distribution.
      * 
      * Each file is also added to the file map, which maps files to dstores.
-     * @param port
-     * @param files
+     * @throws RebalanceException
      */
-    public static void addFileStore(Integer port, String[] files) {
+    public static void addFileStore(Integer port, String[] files) throws RebalanceException {
+        if (ports.stream().anyMatch(_port -> _port == port ))
+            throw new RebalanceException("store with the port " + port + " has already been added");
+
+        if (storeCount >= currentFileDistribution.size())
+            throw new RebalanceException("can't add more than " + storeCount + " file stores");
+
         ports.add(port);
 
-        Set<String> fileStore = new HashSet<String>();
+        Set<String> fileStore = new LinkedHashSet<String>();
 
         for (String file : files) {
             fileStore.add(file);
@@ -85,23 +98,11 @@ public class RebalanceAlgorithm {
         calculateChanges();
     }
 
-    private static void redistributeFiles(String[] _files, int _replicationFactor) {
-        for (int i = 0; i < currentFileDistribution.size(); i++)
-            newFileDistribution.add(new HashSet<String>());
-
-        for (String file : _files) {
-            for (int i = 0; i < _replicationFactor; i++) {
-                // Add the file to the file store with the least number of files.
-                newFileDistribution.stream().min(Comparator.comparingInt(Set::size)).get().add(file);
-            }
-        }
-    }
-
     /**
      * Collects a list of all files distributed through out all dstores.
      */
     private static String[] listFiles() {
-        Set<String> fileSet = new HashSet<String>();
+        Set<String> fileSet = new LinkedHashSet<String>();
 
         for (Set<String> dstoreFiles : currentFileDistribution)
             for (String file : dstoreFiles)
@@ -117,12 +118,33 @@ public class RebalanceAlgorithm {
         return files;
     }
 
+    /**
+     * Create a new distribution for the list files based on the replicaiton factor.
+     */
+    private static void redistributeFiles(String[] _files, int _replicationFactor) {
+        for (int i = 0; i < currentFileDistribution.size(); i++)
+            newFileDistribution.add(new LinkedHashSet<String>());
+
+        for (String file : _files) {
+            for (int i = 0; i < _replicationFactor; i++) {
+                // Add the file to the file store with the least number of files.
+                newFileDistribution.stream().min(Comparator.comparingInt(Set::size)).get().add(file);
+            }
+        }
+    }
+
+    /**
+     * Valid that the files have been evenly distributed between the stores.
+     */
     private static void validateNewDistribution(int _fileCount, int _replicationFactor) throws RebalanceException {
         Predicate<Set<String>> invalidFileCount = s -> !validFileCount(s, _replicationFactor, _fileCount, currentFileDistribution.size());
         if (newFileDistribution.stream().anyMatch(invalidFileCount))
             throw new RebalanceException("invalid file count in file store");
     }
 
+    /**
+     * Validate the number of files in a store is allowed.
+     */
     private static boolean validFileCount(Set<String> _fileStore, int _R, int _F, int _N) {
         int minFileCount = (int) Math.floor(((double)_R * _F) / _N);
         int maxFileCount = (int) Math.ceil(((double)_R * _F) / _N);
@@ -146,7 +168,7 @@ public class RebalanceAlgorithm {
             Set<String> newFileStore = newFileDistribution.get(i);
 
             // Calculate the files to remove from the file store.
-            Set<String> filesToRemove = new HashSet<>();
+            Set<String> filesToRemove = new LinkedHashSet<String>();
             filesToRemove.addAll(currentFileStore);
             filesToRemove.removeAll(newFileStore);
 
@@ -154,7 +176,7 @@ public class RebalanceAlgorithm {
                 distributionChanges[i].removeFile(file);
 
             // Calculate the files to add to the file store.
-            Set<String> filesToAdd = new HashSet<>();
+            Set<String> filesToAdd = new LinkedHashSet<String>();
             filesToAdd.addAll(newFileStore);
             filesToAdd.removeAll(currentFileStore);
 

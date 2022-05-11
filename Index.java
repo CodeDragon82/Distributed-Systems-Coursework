@@ -1,5 +1,5 @@
 import java.util.HashMap;
-import java.util.Set;
+import java.util.function.Predicate;
 
 public class Index {
 
@@ -27,8 +27,16 @@ public class Index {
         files.remove(_fileName);
     }
 
-    public static Set<String> listFiles() { 
-        return files.keySet();
+    /**
+     * Returns an array of files that stored in the index that 
+     * are not in "process of store" or "process of remove".
+     */
+    public static String[] listFiles() { 
+        Predicate<String> condition = file -> files.get(file).removeInProcess.isSet()
+                                           && files.get(file).storeInProcess.isSet();
+        String[] availableFiles = files.keySet().stream().filter(condition).toArray(String[]::new);
+
+        return availableFiles;
     }
 
     /**
@@ -94,31 +102,5 @@ public class Index {
 
     public static Flag getRemoveAck(String _fileName) { 
         return files.get(_fileName).removeAck;
-    }
-
-
-
-    //// LOADING ////
-
-    /**
-     * Sets the loading attempt to 1.
-     */
-    public static void resetLoadAttempt(String _fileName) {
-        files.get(_fileName).loadAttempt.reset();
-        files.get(_fileName).loadAttempt.increment();
-    }
-
-    /**
-     * Increments the loading attempt by 1.
-     */
-    public static void incrementLoadAttempt(String _fileName) {
-        files.get(_fileName).loadAttempt.increment();
-    }
-
-    /**
-     * Return the current loading attempt.
-     */
-    public static int getLoadAttempt(String _fileName) {
-        return files.get(_fileName).loadAttempt.getCount();
     }
 }
