@@ -86,11 +86,7 @@ public class ControllerListener extends Thread {
                 } catch (IOException e1) { 
                     Message.failed("failed to reconnect to controller", 0);
                     
-                    try {
-                        Thread.sleep(Dstore.getTimeout());
-                    } catch (InterruptedException e2) {
-                        e2.printStackTrace();
-                    }
+                    break;
                 }
             } catch (IOException e) {
                 Message.error("controller listener crashed: " + e.getMessage(), 0);
