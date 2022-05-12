@@ -44,11 +44,13 @@ public class DstoreListener extends Thread {
                 String packet = in.readLine();
                 processPacket(packet);
             } catch (SocketTimeoutException e) {
+                // Read timeout.
+                // Normal behaviour.
             } catch (PacketException e) {
                 Message.error(e.getMessage(), 1);
 
                 Message.failed("failed to process packet", 0);
-            }catch (IOException e) {
+            } catch (IOException e) {
                 cleanUp();
             }
         }
@@ -79,6 +81,10 @@ public class DstoreListener extends Thread {
 
         return true;
     }
+
+
+
+    //// PROCESS PACKETS ////
 
     private void processPacket(String _packet) throws PacketException {
         Message.process("processing packet from dstore: " + _packet, 0);
@@ -165,29 +171,19 @@ public class DstoreListener extends Thread {
         Message.info(_error, 1);
     }
 
+
+
+    //// OUT BOUND ////
+
     public void sentToDStore(String _packet) throws IOException {
         Message.info("sending to dstore: " + _packet, 1);
 
         out.println(_packet);    
     }
 
-    public void removeFile(String _fileName) throws IOException, TimeoutException {
-        // Set the remove ACK flag to false.
-        Index.setRemoveAck(_fileName, false);
 
-        // Send REMOVE instruction to dstore.
-        sentToDStore("REMOVE " + _fileName);
 
-        // Wait to receive remove ACK from dstore.
-        ConditionTimeout.waitForFlag(Index.getRemoveAck(_fileName), Controller.getTimeout());
-
-        Message.info("removed " + _fileName + " from dstore ", 1);
-
-        // Reset the remove ACK flag to false.
-        Index.setRemoveAck(_fileName, false);
-    }
-
-    public Socket getSocket() { return dStoreSocket; }
+    //// PROPERTIES ////
 
     public int getClientPort() { return clientPort; }
 }

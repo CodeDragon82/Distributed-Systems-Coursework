@@ -378,14 +378,14 @@ public class ClientListener extends Thread {
         Index.removingFile(_fileName, true);
 
         // Instruct each dstore to remove the target file.
-        for (DstoreListener dStoreListener : Controller.getDStoreListeners()) {
+        for (DstoreListener dstoreListener : Controller.getDStoreListeners()) {
             try {
                 // Sends a packet to the dstore to remove the file and waits for an ACK message.
-                dStoreListener.removeFile(_fileName);
+                removeFile(dstoreListener, _fileName);
 
-                Message.info("removed file from dstore " + dStoreListener.getClientPort(), 1);
+                Message.info("removed file from dstore " + dstoreListener.getClientPort(), 1);
             } catch (TimeoutException e) {
-                Message.error("failed to remove file from dstore " + dStoreListener.getClientPort(), 1);
+                Message.error("failed to remove file from dstore " + dstoreListener.getClientPort(), 1);
             
                 throw e;
             }
@@ -395,6 +395,25 @@ public class ClientListener extends Thread {
         Index.removeFile(_fileName);
 
         respondToClient("REMOVE_COMPLETE");
+    }
+
+    /**
+     * Manages the removal of a file from a dstore.
+     */
+    private void removeFile(DstoreListener _dstoreListener, String _fileName) throws IOException, TimeoutException {
+        // Set the remove ACK flag to false.
+        Index.setRemoveAck(_fileName, false);
+
+        // Send REMOVE instruction to dstore.
+        _dstoreListener.sentToDStore("REMOVE " + _fileName);
+
+        // Wait to receive remove ACK from dstore.
+        ConditionTimeout.waitForFlag(Index.getRemoveAck(_fileName), Controller.getTimeout());
+
+        Message.info("removed " + _fileName + " from dstore ", 1);
+
+        // Reset the remove ACK flag to false.
+        Index.setRemoveAck(_fileName, false);
     }
 
 
