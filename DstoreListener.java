@@ -44,7 +44,11 @@ public class DstoreListener extends Thread {
                 String packet = in.readLine();
                 processPacket(packet);
             } catch (SocketTimeoutException e) {
-            } catch (IOException e) {
+            } catch (PacketException e) {
+                Message.error(e.getMessage(), 1);
+
+                Message.failed("failed to process packet", 0);
+            }catch (IOException e) {
                 cleanUp();
             }
         }
@@ -76,7 +80,7 @@ public class DstoreListener extends Thread {
         return true;
     }
 
-    private void processPacket(String _packet) {
+    private void processPacket(String _packet) throws PacketException {
         Message.process("processing packet from dstore: " + _packet, 0);
 
         String[] packetContent = _packet.split(" ");
@@ -91,21 +95,15 @@ public class DstoreListener extends Thread {
                 arguments[i] = packetContent[i + 1];
         }
 
-        try {
-            if (command.equals("LIST")) processList(arguments);
-            else if (command.equals("REMOVE_ACK")) processRemoveAck(arguments);
-            else if (command.equals("STORE_ACK")) processStoreAck(arguments);
-            else if (command.equals("REBALANCE_COMPLETE")) processRebalanceComplete(arguments);
-            else if (command.equals("ERROR_NOT_ENOUGH_DSTORES")) processError(command);
-            else if (command.equals("ERROR_FILE_DOES_NOT_EXIST")) processError(command);
-            else throw new PacketException("Incorrect/missing command!");
+        if (command.equals("LIST")) processList(arguments);
+        else if (command.equals("REMOVE_ACK")) processRemoveAck(arguments);
+        else if (command.equals("STORE_ACK")) processStoreAck(arguments);
+        else if (command.equals("REBALANCE_COMPLETE")) processRebalanceComplete(arguments);
+        else if (command.equals("ERROR_NOT_ENOUGH_DSTORES")) processError(command);
+        else if (command.equals("ERROR_FILE_DOES_NOT_EXIST")) processError(command);
+        else throw new PacketException("Incorrect/missing command!");
 
-            Message.success("packet processed correctly", 0);
-        } catch (PacketException e) {
-            Message.error(e.getMessage(), 1);
-
-            Message.failed("couldn't process packet", 0);
-        }
+        Message.success("packet processed correctly", 0);
     }
 
     /**
