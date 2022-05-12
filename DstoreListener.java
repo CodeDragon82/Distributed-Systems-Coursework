@@ -83,6 +83,8 @@ public class DstoreListener extends Thread {
     private void processPacket(String _packet) throws PacketException {
         Message.process("processing packet from dstore: " + _packet, 0);
 
+        if (_packet == null) throw new PacketException("can't process null packet");
+
         String[] packetContent = _packet.split(" ");
         String command = "";
         String[] arguments = new String[0];
