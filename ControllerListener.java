@@ -74,6 +74,10 @@ public class ControllerListener extends Thread {
             } catch (SocketTimeoutException e) {
                 // Read timeout.
                 // Normal behaviour.
+            } catch (PacketException e) {
+                Message.error(e.getMessage(), 1);
+
+                Message.failed("failed to process packet", 0);
             } catch (SocketException e) {
                 Message.info("controller conneciton closed", 0);
 
@@ -112,16 +116,10 @@ public class ControllerListener extends Thread {
         Message.info("sent response: " + _packet, 1);
     }
 
-    private void processPacket(String _packet) {
+    private void processPacket(String _packet) throws PacketException, IOException {
         Message.process("processing packet from controller: " + _packet, 0);
 
-        if (_packet == null) {
-            Message.error("received null packet", 1);
-
-            Message.failed("couldn't process packet", 0);
-
-            return;
-        }
+        if (_packet == null) throw new IOException();
 
         String[] packetContent = _packet.split(" ");
         String command = "";
@@ -135,20 +133,12 @@ public class ControllerListener extends Thread {
                 arguments[i] = packetContent[i + 1];
         }
 
-        try {
-            if (command.equals("LIST")) processList(arguments);
-            else if (command.equals("REMOVE")) processRemove(arguments);
-            else if (command.equals("REBALANCE")) processRebalance(arguments);
-            else throw new PacketException("incorrect/missing command");
+        if (command.equals("LIST")) processList(arguments);
+        else if (command.equals("REMOVE")) processRemove(arguments);
+        else if (command.equals("REBALANCE")) processRebalance(arguments);
+        else throw new PacketException("incorrect/missing command");
 
-            Message.success("packet processed correctly", 0);
-        } catch (PacketException e) {
-            Message.error(e.getMessage(), 1);
-
-            Message.failed("couldn't process packet", 0);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        Message.success("packet processed correctly", 0);
     }
 
     /**
@@ -191,6 +181,8 @@ public class ControllerListener extends Thread {
 
         respondToController("REMOVE_ACK " + fileName);
     }
+
+
 
     //// REBALANCING OPERATIONS ////
 
