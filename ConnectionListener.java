@@ -121,8 +121,9 @@ public class ConnectionListener extends Thread {
 
             Message.info("set dstore listener", 1);
 
-            // Start rebalancing operation when a dstore joins.
-            RebalanceModule.startRebalance();
+            // Start rebalancing operation when new dstore joins,
+            // only if there is enough dstores.
+            if (Controller.enoughDStores()) RebalanceModule.startRebalance();
         } catch (IOException e) {
             throw new ConnectionException("failed to create dstore listener");
         }
