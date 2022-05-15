@@ -39,7 +39,7 @@ public class ConnectionListener extends Thread {
                             + newConnection.getInetAddress().getHostAddress() 
                             + ":" + newConnection.getPort(), 1);
 
-                String firstPacket = "";
+                String firstPacket;
                 BufferedReader in;
                 try {
                     in = new BufferedReader(new InputStreamReader(newConnection.getInputStream()));
@@ -48,7 +48,8 @@ public class ConnectionListener extends Thread {
                     throw new ConnectionException("couldn't read first packet from new connection");
                 }
 
-                if (firstPacket.equals("JOIN")) connectionFromDStore(newConnection, in);
+                if (firstPacket == null) throw new ConnectionException("first packet was null");
+                else if (firstPacket.equals("JOIN")) connectionFromDStore(newConnection, in);
                 else connectionFromClient(newConnection, in, firstPacket);
 
                 Message.success("connection setup successfully", 0);
