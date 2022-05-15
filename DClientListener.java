@@ -1,5 +1,7 @@
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -71,8 +73,8 @@ public class DClientListener extends Thread {
     /**
      * Send raw byte data to connected node.
      */
-    private void sentData(String _data) throws IOException {
-        socket.getOutputStream().write(_data.getBytes());
+    private void sentData(byte[] _data) throws IOException {
+        socket.getOutputStream().write(_data);
 
         Message.info("sent data: " + _data, 1);
     }
@@ -151,10 +153,9 @@ public class DClientListener extends Thread {
 
         Message.info("reading file content ...", 1);
         // Receive file contents from client.
-        String fileContent = "";
+        byte[] fileBytes;
         try {
-            byte[] fileBytes = socket.getInputStream().readNBytes(_fileSize);
-            fileContent = new String(fileBytes);
+            fileBytes = socket.getInputStream().readNBytes(_fileSize);
         } catch (SocketTimeoutException e) {
             throw new TimeoutException("timed out while reading file content");
         } catch (IOException e) {
@@ -163,8 +164,8 @@ public class DClientListener extends Thread {
 
         // Write file content to new file.
         File file = new File(Dstore.getFileFolder(), _fileName);
-        FileWriter fileWriter = new FileWriter(file);
-        fileWriter.write(fileContent);
+        FileOutputStream fileWriter = new FileOutputStream(file);
+        fileWriter.write(fileBytes);
         fileWriter.close();
 
         Dstore.getControllerListener().respondToController("STORE_ACK " + _fileName);
@@ -202,17 +203,11 @@ public class DClientListener extends Thread {
     }
 
     private void performLoadData(File _file) throws IOException {
-
-        // Read contents of file.
-        FileReader fileReader = new FileReader(_file);
-        BufferedReader bufferedReader = new BufferedReader(fileReader);
-        String line = bufferedReader.readLine();
-        String fileContent = line;
-        while ((line = bufferedReader.readLine()) != null) fileContent += "\n" + line;
-        bufferedReader.close();
+        FileInputStream fileReader = new FileInputStream(_file);
+        byte[] fileBytes = fileReader.readAllBytes();
         fileReader.close();
 
-        sentData(fileContent);
+        sentData(fileBytes);
     }
 
 
