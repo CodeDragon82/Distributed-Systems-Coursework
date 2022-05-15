@@ -13,10 +13,10 @@ public class DstoreListener extends Thread {
 
     private int clientPort;
 
-    public DstoreListener(Socket _dStoreSocket) throws IOException, NumberFormatException {
+    public DstoreListener(Socket _dStoreSocket, BufferedReader _in) throws IOException, NumberFormatException {
         dStoreSocket = _dStoreSocket;
         dStoreSocket.setSoTimeout(Controller.getTimeout());
-        in = new BufferedReader(new InputStreamReader(dStoreSocket.getInputStream()));
+        in = _in;
         out = new PrintWriter(dStoreSocket.getOutputStream(), true);
 
         try {
@@ -24,6 +24,7 @@ public class DstoreListener extends Thread {
 
             Message.info("dstore is listening for client messages on port " + clientPort, 1);
         } catch (IOException e) {
+            e.printStackTrace();
             Message.error("failed to get client listening port", 1);
 
             cleanUp();
@@ -50,7 +51,13 @@ public class DstoreListener extends Thread {
                 Message.error(e.getMessage(), 1);
 
                 Message.failed("failed to process packet", 0);
+            } catch (NullPacketException e) {
+                Message.error(e.getMessage(), 1);
+
+                cleanUp();
             } catch (IOException e) {
+                e.printStackTrace();
+
                 cleanUp();
             }
         }
@@ -86,10 +93,10 @@ public class DstoreListener extends Thread {
 
     //// PROCESS PACKETS ////
 
-    private void processPacket(String _packet) throws PacketException {
+    private void processPacket(String _packet) throws PacketException, NullPacketException {
         Message.process("processing packet from dstore: " + _packet, 0);
 
-        if (_packet == null) throw new PacketException("can't process null packet");
+        if (_packet == null) throw new NullPacketException("dstore");
 
         String[] packetContent = _packet.split(" ");
         String command = "";

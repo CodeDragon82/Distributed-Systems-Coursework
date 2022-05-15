@@ -2,7 +2,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
-
+import java.nio.Buffer;
 import java.io.InputStreamReader;
 
 /**
@@ -39,9 +39,17 @@ public class ConnectionListener extends Thread {
                             + newConnection.getInetAddress().getHostAddress() 
                             + ":" + newConnection.getPort(), 1);
 
-                String firstPacket = readFirstPacket(newConnection);
-                if (firstPacket.equals("JOIN")) connectionFromDStore(newConnection);
-                else connectionFromClient(newConnection, firstPacket);
+                String firstPacket = "";
+                BufferedReader in;
+                try {
+                    in = new BufferedReader(new InputStreamReader(newConnection.getInputStream()));
+                    firstPacket = in.readLine();
+                } catch (IOException e) {
+                    throw new ConnectionException("couldn't read first packet from new connection");
+                }
+
+                if (firstPacket.equals("JOIN")) connectionFromDStore(newConnection, in);
+                else connectionFromClient(newConnection, in, firstPacket);
 
                 Message.success("connection setup successfully", 0);
                 
@@ -72,30 +80,15 @@ public class ConnectionListener extends Thread {
             }
         }
     }
-
-    /**
-     * Reads the first packet from the new connection.
-     */
-    private String readFirstPacket(Socket _socket) throws ConnectionException {
-        String firstPacket = "";
-        try {
-            BufferedReader in = new BufferedReader(new InputStreamReader(_socket.getInputStream()));
-            firstPacket = in.readLine();
-        } catch (IOException e) {
-            throw new ConnectionException("couldn't read first packet from new connection");
-        }
-
-        return firstPacket;
-    }
     
     /**
      * Sets up a client listener for the newly connected client.
      */
-    private void connectionFromClient(Socket _clientSocket, String _firstPacket) throws ConnectionException {
+    private void connectionFromClient(Socket _clientSocket, BufferedReader _in, String _firstPacket) throws ConnectionException {
         Message.info("connection is from a client", 1);
 
         try {
-            ClientListener clientListener = new ClientListener(_clientSocket, _firstPacket);
+            ClientListener clientListener = new ClientListener(_clientSocket, _in, _firstPacket);
             clientListener.setName("clnt");
             Controller.setClientListener(clientListener);
             clientListener.start();
@@ -110,11 +103,11 @@ public class ConnectionListener extends Thread {
     /**
      * Sets up a dstore listener for the newly connected dstore.
      */
-    private void connectionFromDStore(Socket _dStoreSocket) throws ConnectionException {
+    private void connectionFromDStore(Socket _dStoreSocket, BufferedReader _in) throws ConnectionException {
         Message.info("connection is from a dstore", 1);
 
         try {
-            DstoreListener dStoreListener = new DstoreListener(_dStoreSocket);
+            DstoreListener dStoreListener = new DstoreListener(_dStoreSocket, _in);
             dStoreListener.setName("dstr");
             Controller.addDStoreListener(dStoreListener);
             dStoreListener.start();

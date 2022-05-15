@@ -78,7 +78,9 @@ public class ControllerListener extends Thread {
                 Message.error(e.getMessage(), 1);
 
                 Message.failed("failed to process packet", 0);
-            } catch (SocketException e) {
+            } catch (NullPacketException | SocketException e) {
+                Message.error(e.getMessage(), 1);
+
                 Message.info("controller conneciton closed", 0);
 
                 Message.process("reconnecting to controller ...", 0);
@@ -116,10 +118,10 @@ public class ControllerListener extends Thread {
         Message.info("sent response: " + _packet, 1);
     }
 
-    private void processPacket(String _packet) throws PacketException, IOException {
+    private void processPacket(String _packet) throws PacketException, IOException, NullPacketException {
         Message.process("processing packet from controller: " + _packet, 0);
 
-        if (_packet == null) throw new IOException();
+        if (_packet == null) throw new NullPacketException("controller");
 
         String[] packetContent = _packet.split(" ");
         String command = "";

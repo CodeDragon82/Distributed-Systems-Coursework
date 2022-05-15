@@ -32,8 +32,8 @@ public class Index {
      * are not in "process of store" or "process of remove".
      */
     public static String[] listFiles() { 
-        Predicate<String> condition = file -> files.get(file).removeInProcess.isSet()
-                                           && files.get(file).storeInProcess.isSet();
+        Predicate<String> condition = file -> !files.get(file).removeInProcess.isSet()
+                                           && !files.get(file).storeInProcess.isSet();
         String[] availableFiles = files.keySet().stream().filter(condition).toArray(String[]::new);
 
         return availableFiles;

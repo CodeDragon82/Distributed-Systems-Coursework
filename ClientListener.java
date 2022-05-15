@@ -32,10 +32,10 @@ public class ClientListener extends Thread {
      */
     public Count loadAttempt;
 
-    public ClientListener(Socket _clientSocket, String _firstPacket) throws IOException {
+    public ClientListener(Socket _clientSocket, BufferedReader _in, String _firstPacket) throws IOException {
         clientSocket = _clientSocket;
 
-        in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
+        in = _in;
         out = new PrintWriter(clientSocket.getOutputStream(), true);
 
         firstPacket = _firstPacket;
@@ -53,6 +53,12 @@ public class ClientListener extends Thread {
             Message.error(e.getMessage(), 1);
 
             Message.failed("processing packet timed out", 0);
+        } catch (NullPacketException e) {
+            Message.error(e.getMessage(), 1);
+
+            closeConnection();
+
+            Message.success("client connection closed", 0);
         } catch (IOException e) {
             closeConnection();
 
@@ -78,12 +84,18 @@ public class ClientListener extends Thread {
                 Message.error(e.getMessage(), 1);
 
                 Message.failed("processing packet timed out", 0);
+            } catch (NullPacketException e) {
+                Message.error(e.getMessage(), 1);
+
+                closeConnection();
+
+                Message.success("client connection closed", 0);
             } catch (IOException e) {
                 closeConnection();
 
                 e.printStackTrace();
                 Message.info("client connection closed", 0);
-            }
+            } 
         }
     }
 
@@ -119,8 +131,8 @@ public class ClientListener extends Thread {
         Message.info("sent response: " + _packet, 1);
     }
 
-    private void processPacket(String _packet) throws PacketException, IOException, TimeoutException {
-        if (_packet == null) throw new PacketException("received null packet");
+    private void processPacket(String _packet) throws PacketException, IOException, TimeoutException, NullPacketException {
+        if (_packet == null) throw new NullPacketException("client");
 
         String[] packetContent = _packet.split(" ");
         String command = "";
