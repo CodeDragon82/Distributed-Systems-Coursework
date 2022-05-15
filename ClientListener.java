@@ -39,6 +39,8 @@ public class ClientListener extends Thread {
         out = new PrintWriter(clientSocket.getOutputStream(), true);
 
         firstPacket = _firstPacket;
+
+        loadAttempt = new Count();
     }
 
     @Override
