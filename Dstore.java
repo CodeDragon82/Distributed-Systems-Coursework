@@ -89,6 +89,7 @@ public class Dstore {
 
                 setupCorrectly = false;
             }
+
         } catch (ArrayIndexOutOfBoundsException e) {
             Message.error("file folder not specified", 1);
 

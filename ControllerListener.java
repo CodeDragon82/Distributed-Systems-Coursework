@@ -145,7 +145,6 @@ public class ControllerListener extends Thread {
      * Processing list request from controller to dstore.
      * 
      * This happens when the controller is rebalancing the network.
-     * @throws IOException
      */
     private void processList(String[] _arguments) throws PacketException, IOException {
         Message.info("LIST request", 1);
@@ -186,6 +185,9 @@ public class ControllerListener extends Thread {
 
     //// REBALANCING OPERATIONS ////
 
+    /**
+     * Processes a rebalance request.
+     */
     private void processRebalance(String[] _arguments) throws UnknownHostException, IOException, PacketException {
         Message.info("REBALANCE request", 1);
 

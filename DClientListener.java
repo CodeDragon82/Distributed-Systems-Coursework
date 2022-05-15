@@ -44,12 +44,23 @@ public class DClientListener extends Thread {
                 String packet = in.readLine();
                 
                 processPacket(packet);
+            } catch (PacketException e) {
+                Message.error(e.getMessage(), 1);
+
+                Message.failed("failed to process packet", 0);
+            } catch (TimeoutException e) {
+                Message.error(e.getMessage(), 1);
+
+                Message.failed("timed out while processing packet", 0);
             } catch (IOException e) {
                 e.printStackTrace();
-            }
+            } 
         }
     }
 
+    /**
+     * Send packet to connected node.
+     */
     private void respond(String _packet) throws IOException {
         PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
         out.println(_packet);
@@ -57,22 +68,19 @@ public class DClientListener extends Thread {
         Message.info("sent response: " + _packet, 1);
     }
 
+    /**
+     * Send raw byte data to connected node.
+     */
     private void sentData(String _data) throws IOException {
         socket.getOutputStream().write(_data.getBytes());
 
         Message.info("sent data: " + _data, 1);
     }
 
-    private void processPacket(String _packet) {
+    private void processPacket(String _packet) throws IOException, PacketException, TimeoutException {
         Message.process("processing packet: " + _packet, 0);
 
-        if (_packet == null) {
-            Message.error("received null packet", 1);
-
-            Message.failed("couldn't process packet", 0);
-
-            return;
-        }
+        if (_packet == null) throw new PacketException("couldn't process null packet");
 
         String[] packetContent = _packet.split(" ");
         String command = "";
@@ -88,24 +96,12 @@ public class DClientListener extends Thread {
                 arguments[i] = packetContent[i + 1];
         }
 
-        try {
-            if (command.equals("STORE")) processStore(arguments);
-            else if (command.equals("LOAD_DATA")) processLoadData(arguments);
-            else if (command.equals("REBALANCE_STORE")) processRebalanceStore(arguments);
-            else throw new PacketException("incorrect/missing command");
+        if (command.equals("STORE")) processStore(arguments);
+        else if (command.equals("LOAD_DATA")) processLoadData(arguments);
+        else if (command.equals("REBALANCE_STORE")) processRebalanceStore(arguments);
+        else throw new PacketException("incorrect/missing command");
 
-            Message.success("packet processed correctly", 0);
-        } catch (PacketException e) {
-            Message.error(e.getMessage(), 1);
-
-            Message.failed("couldn't process packet", 0);
-        } catch (TimeoutException e) {
-            Message.error(e.getMessage(), 1);
-
-            Message.failed("processing packet timeout", 0);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        Message.success("packet processed correctly", 0);
     }
 
 
