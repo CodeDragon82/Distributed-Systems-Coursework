@@ -1,4 +1,6 @@
 import java.io.IOException;
+import java.net.ServerSocket;
+import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Predicate;
@@ -9,14 +11,13 @@ public class Controller {
     private static int timeout;
     private static int rebalancePeriod;
 
-    private static List<ClientListener> clientListeners;
-    private static List<DstoreListener> dStoreListeners;
+    private static List<ClientDstoreListener> dStoreListeners;
 
     public static void main(String[] args) throws IOException, IndexException {
         if (setupServer(args)) {
-            listenForConnections();
-
             RebalanceModule.scheduleRebalance();
+
+            listenForConnections();
         }
     }
 
@@ -27,8 +28,7 @@ public class Controller {
 
         Index.setup();
 
-        clientListeners = new ArrayList<ClientListener>();
-        dStoreListeners = new ArrayList<DstoreListener>();
+        dStoreListeners = new ArrayList<ClientDstoreListener>();
 
         //// Validating arguments ////
         try {
@@ -106,19 +106,21 @@ public class Controller {
 
     /**
      * Sets up the connection listener.
+     * @throws IOException
      */
-    private static void listenForConnections() {
-        Message.process("setting up connection listener", 0);
+    private static void listenForConnections() throws IOException {
+        try (ServerSocket serverSocket = new ServerSocket(cPort)) {
+            Message.info("setup server socket", 0);
 
-        try {
-            ConnectionListener connectionListener = new ConnectionListener(cPort);
-            connectionListener.setName("conn"); // Name thread.
+            while(true) {
+                Socket newConnection = serverSocket.accept();
 
-            Message.success("connection listener setup complete", 0);
+                Message.info("new connection established from " 
+                    + newConnection.getInetAddress().getHostAddress() 
+                    + ":" + newConnection.getPort(), 1);
 
-            connectionListener.start();
-        } catch (IOException e) {
-            Message.error("failed to setup connection listener", 0);
+                new ClientDstoreListener(newConnection).start();
+            }
         }
     }
 
@@ -127,18 +129,9 @@ public class Controller {
      */
     public static boolean enoughDStores() { return dStoreListeners.size() >= replicationFactor; }
 
-    public static void setClientListener(ClientListener _clientListener) { clientListeners.add(_clientListener); }
-    public static void addDStoreListener(DstoreListener _dStoreListener) { dStoreListeners.add(_dStoreListener); }
+    public static void addDStoreListener(ClientDstoreListener _dStoreListener) { dStoreListeners.add(_dStoreListener); }
 
-    public static List<ClientListener> getClientListener() { 
-
-        // Remove unconnected client.
-        checkClientConnections();
-
-        return clientListeners;
-    }
-
-    public static List<DstoreListener> getDStoreListeners() {
+    public static List<ClientDstoreListener> getDStoreListeners() {
         
         // Remove unconnected dstores.
         checkDStoreConnections();
@@ -147,19 +140,10 @@ public class Controller {
     }
 
     /**
-     * Removes client listeners with failed connections.
-     */
-    private static void checkClientConnections() {
-        Predicate<ClientListener> notConnected = cl -> !cl.isConnected();
-
-        clientListeners.removeIf(notConnected);
-    }
-
-    /**
      * Removes dstore listeners with failed connections.
      */
     private static void checkDStoreConnections() {
-        Predicate<DstoreListener> notConnected = ds -> !ds.isConnected();
+        Predicate<ClientDstoreListener> notConnected = ds -> !ds.isConnected();
 
         dStoreListeners.removeIf(notConnected);
     }
