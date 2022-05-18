@@ -2,7 +2,6 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.nio.Buffer;
 import java.io.InputStreamReader;
 
 /**
@@ -33,26 +32,7 @@ public class ConnectionListener extends Thread {
             Socket newConnection = new Socket();
             try {
                 newConnection = serverSocket.accept();
-
-                Message.process("processing new connection", 0);
-                Message.info("new connection established from " 
-                            + newConnection.getInetAddress().getHostAddress() 
-                            + ":" + newConnection.getPort(), 1);
-
-                String firstPacket;
-                BufferedReader in;
-                try {
-                    in = new BufferedReader(new InputStreamReader(newConnection.getInputStream()));
-                    firstPacket = in.readLine();
-                } catch (IOException e) {
-                    throw new ConnectionException("couldn't read first packet from new connection");
-                }
-
-                if (firstPacket == null) throw new ConnectionException("first packet was null");
-                else if (firstPacket.equals("JOIN")) connectionFromDStore(newConnection, in);
-                else connectionFromClient(newConnection, in, firstPacket);
-
-                Message.success("connection setup successfully", 0);
+                processNewConnection(newConnection);
                 
             } catch (ConnectionException e) {
                 Message.error(e.getMessage(), 1);
@@ -81,6 +61,29 @@ public class ConnectionListener extends Thread {
             }
         }
     }
+
+    private void processNewConnection(Socket _newConnection) throws ConnectionException {
+        Message.process("processing new connection", 0);
+
+        Message.info("new connection established from " 
+                    + _newConnection.getInetAddress().getHostAddress() 
+                    + ":" + _newConnection.getPort(), 1);
+
+        String firstPacket;
+        BufferedReader in;
+        try {
+            in = new BufferedReader(new InputStreamReader(_newConnection.getInputStream()));
+            firstPacket = in.readLine();
+        } catch (IOException e) {
+            throw new ConnectionException("couldn't read first packet from new connection");
+        }
+
+        if (firstPacket == null) throw new ConnectionException("first packet was null");
+        else if (firstPacket.equals("JOIN")) connectionFromDStore(_newConnection, in);
+        else connectionFromClient(_newConnection, in, firstPacket);
+
+        Message.success("connection setup successfully", 0);
+    }
     
     /**
      * Sets up a client listener for the newly connected client.
@@ -90,7 +93,7 @@ public class ConnectionListener extends Thread {
 
         try {
             ClientListener clientListener = new ClientListener(_clientSocket, _in, _firstPacket);
-            clientListener.setName("clnt");
+            clientListener.setName("clnt " + _clientSocket.getPort());
             Controller.setClientListener(clientListener);
             clientListener.start();
 
@@ -109,7 +112,7 @@ public class ConnectionListener extends Thread {
 
         try {
             DstoreListener dStoreListener = new DstoreListener(_dStoreSocket, _in);
-            dStoreListener.setName("dstr");
+            dStoreListener.setName("dstr " + dStoreListener.getClientPort());
             Controller.addDStoreListener(dStoreListener);
             dStoreListener.start();
 
@@ -117,7 +120,7 @@ public class ConnectionListener extends Thread {
 
             // Start rebalancing operation when new dstore joins,
             // only if there is enough dstores.
-            if (Controller.enoughDStores()) RebalanceModule.startRebalance();
+            if (Controller.enoughDStores()) RebalanceModule.rebalanceEarly();
         } catch (IOException e) {
             throw new ConnectionException("failed to create dstore listener");
         }

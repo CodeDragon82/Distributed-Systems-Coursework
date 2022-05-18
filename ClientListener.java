@@ -44,60 +44,9 @@ public class ClientListener extends Thread {
 
     @Override
     public void run() {
-        try {
-            processPacket(firstPacket);
-        } catch (PacketException e) {
-            Message.error(e.getMessage(), 1);
+        handleFirstPacket();
 
-            Message.failed("failed to process packet", 0);
-        } catch (TimeoutException e) {
-            Message.error(e.getMessage(), 1);
-
-            Message.failed("processing packet timed out", 0);
-        } catch (NullPacketException e) {
-            Message.error(e.getMessage(), 1);
-
-            closeConnection();
-
-            Message.success("client connection closed", 0);
-        } catch (IOException e) {
-            closeConnection();
-
-            e.printStackTrace();
-            Message.info("client connection closed", 0);
-        }
-
-        while (isConnected()) {
-            try {
-                if (!RebalanceModule.isRebalancing()) {
-                    String packet = in.readLine();
-                    Message.process("processing incoming packet from client: " + packet, 0);
-                    
-                    processPacket(packet);
-
-                    Message.success("packet processed correctly", 0);
-                }
-            } catch (PacketException e) {
-                Message.error(e.getMessage(), 1);
-
-                Message.failed("failed to process packet", 0);
-            } catch (TimeoutException e) {
-                Message.error(e.getMessage(), 1);
-
-                Message.failed("processing packet timed out", 0);
-            } catch (NullPacketException e) {
-                Message.error(e.getMessage(), 1);
-
-                closeConnection();
-
-                Message.success("client connection closed", 0);
-            } catch (IOException e) {
-                closeConnection();
-
-                e.printStackTrace();
-                Message.info("client connection closed", 0);
-            } 
-        }
+        while (isConnected()) handleNextPacket();
     }
 
     /**
@@ -130,6 +79,69 @@ public class ClientListener extends Thread {
         out.println(_packet);
 
         Message.info("sent response: " + _packet, 1);
+    }
+
+
+
+    //// Process Packets
+
+    private void handleFirstPacket() {
+        try {
+            Message.process("processing first packet from client: " + firstPacket, 0);
+
+            processPacket(firstPacket);
+        } catch (PacketException e) {
+            Message.error(e.getMessage(), 1);
+
+            Message.failed("failed to process packet", 0);
+        } catch (TimeoutException e) {
+            Message.error(e.getMessage(), 1);
+
+            Message.failed("processing packet timed out", 0);
+        } catch (NullPacketException e) {
+            Message.error(e.getMessage(), 1);
+
+            closeConnection();
+
+            Message.success("client connection closed", 0);
+        } catch (IOException e) {
+            closeConnection();
+
+            e.printStackTrace();
+            Message.info("client connection closed", 0);
+        }
+    }
+
+    private void handleNextPacket() {
+        try {
+            if (!RebalanceModule.isRebalancing()) {
+                String packet = in.readLine();
+                Message.process("processing next packet from client: " + packet, 0);
+                
+                processPacket(packet);
+
+                Message.success("packet processed correctly", 0);
+            }
+        } catch (PacketException e) {
+            Message.error(e.getMessage(), 1);
+
+            Message.failed("failed to process packet", 0);
+        } catch (TimeoutException e) {
+            Message.error(e.getMessage(), 1);
+
+            Message.failed("processing packet timed out", 0);
+        } catch (NullPacketException e) {
+            Message.error(e.getMessage(), 1);
+
+            closeConnection();
+
+            Message.success("client connection closed", 0);
+        } catch (IOException e) {
+            closeConnection();
+
+            e.printStackTrace();
+            Message.info("client connection closed", 0);
+        } 
     }
 
     private void processPacket(String _packet) throws PacketException, IOException, TimeoutException, NullPacketException {
@@ -457,6 +469,7 @@ public class ClientListener extends Thread {
     }
 
     private void performList() throws IOException {
+        Message.info("performing LIST operation", 1);
         
         // Collect file names into one string.
         String files = String.join(" ", Index.listFiles());

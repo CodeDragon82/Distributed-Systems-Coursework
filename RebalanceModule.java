@@ -17,24 +17,20 @@ public class RebalanceModule {
         rebalanceAck = new Flag();
         listAck = new Flag();
 
-        TimerTask timerTask = new TimerTask() {
+        timer = new Timer("rebl");
+        timer.schedule(new TimerTask() { 
             @Override
             public void run() { 
                 if (Controller.enoughDStores()) startRebalance();
                 else Message.info("waiting for more dstores to join", 0);
             }
-        };
-
-        int interval = Controller.getRebalancePeriod() * 1000;
-
-        timer = new Timer("rebl");
-        timer.schedule(timerTask, interval, interval);
+        }, Controller.getRebalancePeriod(), Controller.getRebalancePeriod());
     }
 
     /**
      * Starts a rebalancing operation if rebalancing isn't already running.
      */
-    public static void startRebalance() {
+    private static void startRebalance() {
         if (rebalancing.isSet()) return;
         
         try {
@@ -53,6 +49,20 @@ public class RebalanceModule {
         } finally {
             rebalancing.reset();
         }
+    }
+
+    public static void rebalanceEarly() {
+        timer.cancel();
+        timer.purge();
+
+        timer = new Timer("rebl");
+        timer.schedule(new TimerTask() { 
+            @Override
+            public void run() { 
+                if (Controller.enoughDStores()) startRebalance();
+                else Message.info("waiting for more dstores to join", 0);
+            }
+        }, 0, Controller.getRebalancePeriod());
     }
 
     /**
